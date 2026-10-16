@@ -14,6 +14,7 @@ $("plan-form").addEventListener("input", () => { planDirty = true; });
 function updateAIFields() {
   $("custom-ai-fields").hidden = $("ai-source").value !== "custom";
   $("test-ai").disabled = !connected || pending || state?.status === "running" || $("ai-source").value !== "custom";
+  $("test-ai").title = state?.status === "running" ? "可先保存配置；模型列表检查请在当前任务结束后进行。" : "仅请求模型列表，不发送答题内容。";
 }
 
 function readAI() {
@@ -44,7 +45,7 @@ async function saveAI(showToast = true) {
     ["ai-key", "ppt-key"].forEach((id) => { $(id).value = ""; });
     ["ai-clear-key", "ppt-clear-key"].forEach((id) => { $(id).checked = false; });
     await fetchState();
-    if (showToast) toast("AI 配置已保存，没有发送模型请求。");
+    if (showToast) toast(state.status === "running" ? "AI 配置已保存，下次任务生效，当前任务继续运行。" : "AI 配置已保存，没有发送模型请求。");
     return true;
   } catch (error) { toast(error.message, true); return false; }
   finally { pending = false; updateButtons(); renderFeatures(); }
@@ -111,7 +112,9 @@ function renderFeatures() {
     $("ppt-delete").checked = ai.ppt_processing.moonShot.delete_after_convert;
     $("ppt-key-state").textContent = ai.ppt_processing.moonShot.has_api_key ? "已保存，留空保留。" : "尚未保存文件处理密钥。";
   }
-  $("ai-usage").textContent = `本次生成请求 ${state.ai_requests} / ${state.ai.max_requests} 次`;
+  const activeLimit = state.status === "running" && state.action === "start" ? (state.active_ai_max_requests ?? state.ai.max_requests) : state.ai.max_requests;
+  $("ai-usage").textContent = `本次生成请求 ${state.ai_requests} / ${activeLimit} 次`;
+  $("ai-run-note").hidden = state.status !== "running";
   const planSig = JSON.stringify([state.plan, state.courses.map((c) => [keyOf(c), c.name])]);
   if (planSig !== planSignature) {
     const chosen = planDirty ? selectedPlanCourses() : state.plan.courses;
@@ -128,7 +131,9 @@ function renderFeatures() {
   $("plan-status").className = "badge" + (state.plan.enabled ? " green" : "");
   $("next-run").textContent = state.next_run ? new Date(state.next_run).toLocaleString("zh-CN", { hour12: false }) : "保存并启用计划后显示";
   $("pause-plan").hidden = !state.plan.enabled;
-  document.querySelectorAll("[data-feature-button]").forEach((button) => { button.disabled = !connected || pending || state.status === "running"; });
+  document.querySelectorAll("[data-feature-button]").forEach((button) => {
+    button.disabled = !connected || pending || (state.status === "running" && !button.hasAttribute("data-allow-while-running"));
+  });
   updateAIFields();
   renderHistory();
 }

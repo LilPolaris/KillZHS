@@ -24,6 +24,7 @@ def main():
         raise SystemExit("Install requirements-build.txt in the build environment first.")
     build = ROOT / ".local" / "build"
     release = ROOT / "output" / "release"
+    distribution_dir = release / VERSION
     tokenizer = build / "tokenizer"
     tokenizer.mkdir(parents=True, exist_ok=True)
     release.mkdir(parents=True, exist_ok=True)
@@ -51,12 +52,12 @@ def main():
                     shutil.copyfile(source, target)
     from PyInstaller.__main__ import run
     run([str(ROOT / "killzhs.py"), "--name", "KillZHS", "--onedir", "--windowed", "--noconfirm",
-         "--distpath", str(release), "--workpath", str(build / "work"), "--specpath", str(build),
+         "--distpath", str(distribution_dir), "--workpath", str(build / "work"), "--specpath", str(build),
          "--add-data", str(ROOT / "web") + ":web", "--add-data", str(ROOT / "LICENSE") + ":.",
          "--add-data", str(ROOT / "NOTICE.md") + ":.", "--add-data", str(tokenizer) + ":tokenizer",
          "--add-data", str(licenses) + ":third-party-licenses", "--collect-submodules", "tiktoken_ext",
          "--collect-all", "Crypto", "--exclude-module", "pytest", "--exclude-module", "IPython"])
-    bundle = release / "KillZHS"
+    bundle = distribution_dir / "KillZHS"
     shutil.copyfile(ROOT / "LICENSE", bundle / "LICENSE")
     shutil.copyfile(ROOT / "NOTICE.md", bundle / "NOTICE.md")
     shutil.copyfile(ROOT / "docs" / "WINDOWS.md", bundle / "使用说明.txt")
@@ -68,7 +69,7 @@ def main():
     with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as output:
         for path in sorted(bundle.rglob("*")):
             if path.is_file():
-                output.write(path, path.relative_to(release))
+                output.write(path, path.relative_to(distribution_dir))
     checksum = hashlib.file_digest(archive.open("rb"), "sha256").hexdigest()
     (release / "SHA256SUMS.txt").write_text(checksum + "  " + archive.name + "\n", encoding="utf-8")
     print(f"Release ready: {archive.name} ({archive.stat().st_size / 1024 / 1024:.1f} MB)")

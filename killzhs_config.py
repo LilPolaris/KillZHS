@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import re
 from urllib.parse import urlsplit
 
-VERSION = "0.1.0-beta.1"
+VERSION = "0.1.0-beta.2"
 
 
 class InputError(ValueError):

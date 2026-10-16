@@ -143,6 +143,41 @@ class SchedulingTest(unittest.TestCase):
         snapshot = json.dumps(self.controller.state())
         self.assertNotIn("private-key", snapshot)
 
+    def test_ai_can_be_saved_during_run_without_changing_active_payload(self):
+        capture = self.root / "captured.json"
+        script = self.root / "capture_worker.py"
+        script.write_text("import json,sys,time\nfrom pathlib import Path\n"
+                          "payload=json.loads(sys.stdin.readline())\n"
+                          "Path(payload['root'],'captured.json').write_text(json.dumps(payload),encoding='utf-8')\n"
+                          "time.sleep(60)\n", encoding="utf-8")
+        self.controller.worker_command = [sys.executable, "-u", str(script)]
+        self.controller.logged_in = True
+        self.controller.dispatch({"action": "start", "courses": ["hike:12"]})
+        process = self.wait_for_process()
+        started = self.controller.started_at
+        deadline = time.monotonic() + 3
+        while not capture.is_file() and time.monotonic() < deadline:
+            time.sleep(.01)
+        self.assertTrue(capture.is_file())
+        self.controller.dispatch({"action": "ai_settings", "ai": {
+            "enabled": True, "max_requests": 2, "openai": {"api_key": "offline-test-key"}}})
+        snapshot = self.controller.state()
+        self.assertEqual(snapshot["status"], "running")
+        self.assertEqual(self.controller.process.pid, process.pid)
+        self.assertIsNone(process.poll())
+        self.assertEqual(self.controller.started_at, started)
+        self.assertEqual(snapshot["active_ai_max_requests"], 10)
+        self.assertEqual(snapshot["ai"]["max_requests"], 2)
+        self.assertTrue(snapshot["ai"]["openai"]["has_api_key"])
+        self.assertNotIn("offline-test-key", json.dumps(snapshot))
+        payload = json.loads(capture.read_text(encoding="utf-8"))
+        self.assertFalse(payload["ai"]["enabled"])
+        self.assertEqual(payload["ai"]["max_requests"], 10)
+        self.assertFalse(payload["ai"]["openai"]["api_key"])
+        self.assertEqual(json.loads((self.controller.local / "ai.json").read_text(encoding="utf-8"))["max_requests"], 2)
+        with self.assertRaises(InputError):
+            self.controller.dispatch({"action": "refresh"})
+
 
 class AIBudgetTest(unittest.TestCase):
     def test_worker_accepts_pretty_json_from_packaged_file_transport(self):

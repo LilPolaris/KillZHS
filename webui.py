@@ -151,6 +151,7 @@ class Controller:
         except InputError:
             self.plan = copy.deepcopy(PLAN_DEFAULTS)
         self.ai_requests = 0
+        self.active_ai_max_requests = None
         self.log("本地工作台已就绪。" + (" 当前为演示模式。" if demo else ""))
 
     def log(self, message, level="info"):
@@ -169,7 +170,8 @@ class Controller:
                 "saved_session": self.has_session(), "version": VERSION, "ai": public_ai(self.ai),
                 "plan": self.plan, "next_run": next_run(self.plan, self.last_schedule_date),
                 "history": list(reversed(self.history)), "deadline": self.deadline,
-                "ai_requests": self.ai_requests, "app": "KillZHS"})
+                "ai_requests": self.ai_requests, "active_ai_max_requests": self.active_ai_max_requests,
+                "app": "KillZHS"})
 
     def has_session(self):
         return (Path(self.runtime.name) / "cookies.json").is_file() or (self.settings["remember"] and (
@@ -183,6 +185,13 @@ class Controller:
             self.stop()
             return
         with self.lock:
+            if action == "ai_settings":
+                updated = validate_ai(data.get("ai"), self.ai)
+                if not self.demo:
+                    atomic_json(self.local / "ai.json", updated)
+                self.ai = updated
+                self.log("AI 设置已保存，将在下次任务生效，没有发送模型请求。")
+                return
             if self.status == "running" or (self.thread and self.thread.is_alive()):
                 raise InputError("已有任务正在运行，请等待结束或先停止。")
             if action == "settings":
@@ -195,12 +204,6 @@ class Controller:
                     if not self.settings["remember"]:
                         (self.local / "cookies.json").unlink(missing_ok=True)
                 self.log("运行设置已保存。")
-                return
-            if action == "ai_settings":
-                self.ai = validate_ai(data.get("ai"), self.ai)
-                if not self.demo:
-                    atomic_json(self.local / "ai.json", self.ai)
-                self.log("AI 设置已保存，没有发送模型请求。")
                 return
             if action == "plan":
                 plan = validate_plan(data.get("plan"), {course_key(c) for c in self.courses})
@@ -248,6 +251,7 @@ class Controller:
             self.job_id += 1
             self.job_courses, self.origin = copy.deepcopy(selected), "schedule" if scheduled else "manual"
             self.ai_requests = 0
+            self.active_ai_max_requests = self.ai["max_requests"] if action == "start" else None
             self.result_status, self.ended_at = None, None
             self.qr, self.progress, self.current = None, None, None
             self.started_at = time.time()

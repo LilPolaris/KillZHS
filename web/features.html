@@ -1,6 +1,7 @@
       <section id="view-ai" class="view" hidden>
         <div class="page-heading"><div><div class="eyebrow">YOUR MODEL, YOUR CHOICE</div><h1>AI 配置<span class="heading-dot">。</span></h1><p>用于 AI 课程。保存配置不会发送模型请求，密钥仅保存在本机。</p></div><span class="badge green" id="ai-usage">本次生成请求 0 次</span></div>
         <section class="panel settings-panel"><div class="panel-heading"><div><h2>答题与模型服务</h2><p>默认跳过测验，需要时再开启 AI 答题。</p></div><span class="stat-icon sage" data-icon="layers"></span></div>
+          <p class="panel-footnote" id="ai-run-note" hidden>当前任务继续使用启动时的 AI 设置。这里保存的配置将在下一次任务生效，无需停止当前任务。</p>
           <form id="ai-form">
             <div class="setting-row"><div><label for="ai-enabled">启用 AI</label><p>使用平台 AI，或填写兼容 Chat Completions 的服务。</p></div><input id="ai-enabled" type="checkbox"></div>
             <div class="setting-row"><div><label for="ai-no-exam">跳过测验</label><p>开启时只处理课程资源；关闭后才允许 AI 处理测验。</p></div><input id="ai-no-exam" type="checkbox" checked></div>
@@ -20,7 +21,7 @@
               <div class="setting-row slim"><label class="remember-row"><input id="ppt-clear-key" type="checkbox">清除已保存的文件处理密钥</label></div>
               <div class="setting-row"><div><label for="ppt-delete">转换后删除服务端文件</label><p>只针对本次课件处理使用的文件。</p></div><input id="ppt-delete" type="checkbox" checked></div>
             </details>
-            <div class="settings-actions"><button class="button secondary" id="test-ai" type="button" data-feature-button>检查模型列表</button><button class="button primary" type="submit" data-feature-button><span data-icon="check"></span>保存 AI 配置</button></div>
+            <div class="settings-actions"><button class="button secondary" id="test-ai" type="button" data-feature-button>检查模型列表</button><button class="button primary" type="submit" data-feature-button data-allow-while-running><span data-icon="check"></span>保存 AI 配置</button></div>
           </form><p class="panel-footnote">模型列表检查仅请求服务的 /models 接口，不发送答题内容。列表可访问不代表所有生成请求都能成功。</p>
         </section>
       </section>
