@@ -28,13 +28,48 @@
 
       <section id="view-plan" class="view" hidden>
         <div class="page-heading"><div><div class="eyebrow">A LITTLE, EVERY DAY</div><h1>每天，留出一点时间<span class="heading-dot">。</span></h1><p>电脑开机联网、KillZHS 保持后台运行时，计划会自动执行。</p></div><span class="badge" id="plan-status">计划未启用</span></div>
-        <section class="plan-summary panel"><span class="stat-icon sage" data-icon="calendar"></span><div><span>下次执行</span><strong id="next-run">保存并启用计划后显示</strong></div><button class="button secondary small" id="pause-plan" data-feature-button>暂停计划</button></section>
-        <section class="panel settings-panel"><div class="panel-heading"><div><h2>每日计划</h2><p>同一天最多触发一次；错过时间不补跑，已有任务运行时跳过。</p></div></div><form id="plan-form">
+        <section class="plan-summary panel"><span class="stat-icon sage" data-icon="calendar"></span><div><span>下次执行</span><strong id="next-run">保存并启用计划后显示</strong></div><button class="button secondary small" id="pause-plan" data-feature-button data-allow-while-running>暂停未来计划</button></section>
+        <section class="panel settings-panel"><div class="panel-heading"><div><h2>每日计划</h2><p>同一天最多触发一次；已有任务运行时跳过。修改计划不影响当前任务。</p></div></div><form id="plan-form">
           <div class="setting-row"><div><label for="plan-enabled">启用计划</label><p>启用前需要记住登录状态，登录过期时会记录原因。</p></div><input id="plan-enabled" type="checkbox"></div>
           <div class="setting-row"><div><label for="plan-time">每天开始时间</label><p>按这台电脑的本地时间执行。</p></div><input id="plan-time" type="time" value="20:00" required></div>
           <div class="setting-row"><div><label for="plan-minutes">整批任务总时长</label><p>所有选中课程共用这段时间，到时结束本次运行。</p></div><div class="input-suffix"><input id="plan-minutes" type="number" min="1" max="240" step="1" value="30" required><span>分钟</span></div></div>
+          <div class="setting-row"><div><label for="plan-catchup">错过后的补跑窗口</label><p>0 表示关闭；窗口内启动或唤醒程序后可补跑，当天最多一次，跨天不补跑。</p></div><div class="input-suffix"><input id="plan-catchup" type="number" min="0" max="720" step="1" value="0" required><span>分钟</span></div></div>
           <fieldset class="plan-days"><legend>执行日</legend><div id="plan-days"></div></fieldset>
           <div class="plan-courses-heading"><h3>要运行的课程</h3><button class="text-button" id="plan-use-selection" type="button">使用概览中的已选课程</button></div><div id="plan-courses" class="plan-courses"></div>
-          <div class="settings-actions"><button class="button primary" type="submit" data-feature-button><span data-icon="check"></span>保存计划</button></div>
-        </form><p class="panel-footnote">本版本不会自动开机、唤醒电脑或注册开机启动项。关闭控制窗口或退出程序后，计划暂停等待；下次启动不会补跑已错过的任务。</p></section>
+          <div class="settings-actions"><button class="button primary" type="submit" data-feature-button data-allow-while-running><span data-icon="check"></span>保存计划</button></div>
+        </form><p class="panel-footnote">本版本不会自动开机、唤醒电脑或注册开机启动项。关闭控制窗口或退出程序后，计划暂停等待；重新启动后只在设置的补跑窗口内尝试一次。</p></section>
       </section>
+
+      <section id="view-notifications" class="view" hidden>
+        <div class="page-heading"><div><div class="eyebrow">STAY INFORMED</div><h1>消息通知<span class="heading-dot">。</span></h1><p>无人值守时，把需要处理的情况发送到手机。默认关闭，密钥仅保存在本机。</p></div></div>
+        <section class="panel settings-panel"><div class="panel-heading"><div><h2>通知渠道</h2><p>只发送运行状态，不发送课程内容、密钥或完整日志。</p></div></div>
+          <form id="notification-form">
+            <div class="setting-row"><div><label for="notification-enabled">启用通知</label><p>程序需要保持运行和联网；保存配置不会发送消息。</p></div><input id="notification-enabled" type="checkbox"></div>
+            <div class="setting-row"><div><label for="notification-provider">推送服务</label></div><select id="notification-provider"><option value="pushplus">PushPlus</option><option value="bark">Bark</option></select></div>
+            <div id="pushplus-fields">
+              <div class="setting-row"><div><label for="pushplus-token">PushPlus Token</label><p id="pushplus-key-state">留空保留已有密钥。</p></div><input id="pushplus-token" type="password" autocomplete="new-password" maxlength="500"></div>
+              <div class="setting-row slim"><label class="remember-row"><input id="pushplus-clear" type="checkbox">清除 PushPlus 密钥</label></div>
+            </div>
+            <div id="bark-fields" hidden>
+              <div class="setting-row"><div><label for="bark-server">Bark 服务器</label><p>可使用默认服务器或自建服务，不要在地址里附带设备密钥。</p></div><input id="bark-server" type="url" value="https://api.day.app" maxlength="500" required></div>
+              <div class="setting-row"><div><label for="bark-key">Bark 设备密钥</label><p id="bark-key-state">留空保留已有密钥。</p></div><input id="bark-key" type="password" autocomplete="new-password" maxlength="500"></div>
+              <div class="setting-row slim"><label class="remember-row"><input id="bark-clear" type="checkbox">清除 Bark 密钥</label></div>
+            </div>
+            <fieldset class="notification-events"><legend>接收哪些提醒</legend>
+              <label><input type="checkbox" data-notify-event="finished" checked>学习任务结束或失败</label>
+              <label><input type="checkbox" data-notify-event="verification" checked>遇到验证码，需要手动处理</label>
+              <label><input type="checkbox" data-notify-event="auth" checked>任务发现登录状态不可用</label>
+              <label><input type="checkbox" data-notify-event="skipped" checked>定时计划被跳过</label>
+            </fieldset>
+            <div class="settings-actions"><button class="button secondary" id="test-notification" type="button" data-feature-button data-allow-while-running>发送测试通知</button><button class="button primary" type="submit" data-feature-button data-allow-while-running><span data-icon="check"></span>保存通知设置</button></div>
+          </form>
+          <p class="panel-footnote">先在 PushPlus 或 Bark 获取接收端密钥。测试按钮会实际发送一条消息；程序收到服务接受响应后会写入日志，手机是否送达请以接收端为准。演示模式不会连接推送服务。</p>
+        </section>
+      </section>
+
+      <dialog id="history-dialog" class="history-dialog" aria-labelledby="history-log-title">
+        <div class="history-dialog-heading"><h2 id="history-log-title">本次任务日志</h2><button class="button secondary small" id="close-history" type="button">关闭</button></div>
+        <p class="panel-footnote">日志已脱敏，最多保留最近 100 次任务，每次最多 2 MB。分享前仍请检查个人信息。</p>
+        <pre id="history-log-text" tabindex="0">正在读取…</pre>
+        <div class="settings-actions"><button class="button primary" id="download-history" type="button" disabled>下载本次日志</button></div>
+      </dialog>

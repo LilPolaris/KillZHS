@@ -61,7 +61,8 @@ def main():
     shutil.copyfile(ROOT / "LICENSE", bundle / "LICENSE")
     shutil.copyfile(ROOT / "NOTICE.md", bundle / "NOTICE.md")
     shutil.copyfile(ROOT / "docs" / "WINDOWS.md", bundle / "使用说明.txt")
-    forbidden = {"config.json", "cookies.json", "execution.json", "ai.json", "settings.json", "history.json", "instance.json", ".env"}
+    forbidden = {"config.json", "cookies.json", "execution.json", "ai.json", "settings.json", "history.json",
+                 "notifications.json", "active-task.json", "instance.json", ".env"}
     for path in bundle.rglob("*"):
         if path.name in forbidden or path.name in (".git", ".venv", ".local", "logs"):
             raise RuntimeError("Private/runtime file unexpectedly included in release: " + path.name)

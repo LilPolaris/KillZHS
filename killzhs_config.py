@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import re
 from urllib.parse import urlsplit
 
-VERSION = "0.1.0-beta.2"
+VERSION = "0.1.0-beta.3"
 
 
 class InputError(ValueError):
@@ -20,7 +20,7 @@ AI_DEFAULTS = {
         "base_url": "https://api.moonshot.cn/v1", "api_key": "", "delete_after_convert": True}},
 }
 PLAN_DEFAULTS = {"enabled": False, "time": "20:00", "weekdays": list(range(7)),
-                 "minutes": 30, "courses": []}
+                 "minutes": 30, "courses": [], "catchup_minutes": 0}
 
 
 def api_url(value):
@@ -104,6 +104,8 @@ def validate_plan(value, known_keys):
     result["weekdays"] = sorted(set(days))
     if type(result["minutes"]) is not int or not 1 <= result["minutes"] <= 240:
         raise InputError("计划时长需为 1–240 分钟。")
+    if type(result["catchup_minutes"]) is not int or not 0 <= result["catchup_minutes"] <= 720:
+        raise InputError("补跑窗口需为 0–720 分钟；0 表示关闭。")
     courses = result["courses"]
     if not isinstance(courses, list) or len(courses) > 200 or any(not isinstance(key, str) or key not in known_keys for key in courses):
         raise InputError("计划中的课程已变化，请重新选择。")
@@ -120,6 +122,10 @@ def next_run(plan, last_date=None, now=None):
     hour, minute = map(int, plan["time"].split(":"))
     for delta in range(8):
         candidate = (now + timedelta(days=delta)).replace(hour=hour, minute=minute, second=0, microsecond=0)
-        if candidate > now and candidate.weekday() in plan["weekdays"] and candidate.date().isoformat() != last_date:
-            return candidate.isoformat()
+        if candidate.weekday() in plan["weekdays"] and candidate.date().isoformat() != last_date:
+            if candidate > now:
+                return candidate.isoformat()
+            late = (now - candidate).total_seconds()
+            if delta == 0 and (late < 60 or (plan.get("catchup_minutes", 0) and late <= plan["catchup_minutes"] * 60)):
+                return now.isoformat()
     return None

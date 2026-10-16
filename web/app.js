@@ -10,6 +10,7 @@ const icons = {
   "arrow-right": '<path d="M4 12h16m-6-6 6 6-6 6"/>',
   shield: '<path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6Z"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
   calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18m-13 4h2m4 0h2"/>',
+  bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>',
   layers: '<path d="m12 3 10 5-10 5L2 8Zm-9 9 9 5 9-5M3 16l9 5 9-5"/>',
   "check-circle": '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
@@ -58,17 +59,18 @@ function toast(message, error = false) {
   toastTimeout = setTimeout(() => { $("toast").hidden = true; }, error ? 6000 : 3200);
 }
 
+const viewTitles = { overview: "学习概览", logs: "运行日志", settings: "偏好设置", guide: "使用指南", ai: "AI 配置", plan: "定时计划", notifications: "消息通知" };
 function route() {
-  const view = ["overview", "logs", "settings", "ai", "plan", "guide"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "overview";
+  const view = Object.hasOwn(viewTitles, location.hash.slice(1)) ? location.hash.slice(1) : "overview";
   document.querySelectorAll(".view").forEach((element) => { element.hidden = element.id !== `view-${view}`; });
   document.querySelectorAll(".nav-link").forEach((element) => {
     element.classList.toggle("active", element.dataset.view === view);
     if (element.dataset.view === view) element.setAttribute("aria-current", "page");
     else element.removeAttribute("aria-current");
     // Icon-only navigation remains labelled on narrow screens.
-    element.setAttribute("aria-label", { overview: "学习概览", logs: "运行日志", settings: "偏好设置", guide: "使用指南", ai: "AI 配置", plan: "定时计划" }[element.dataset.view]);
+    element.setAttribute("aria-label", viewTitles[element.dataset.view]);
   });
-  $("breadcrumb-title").textContent = { overview: "学习概览", logs: "运行日志", settings: "偏好设置", guide: "使用指南", ai: "AI 配置", plan: "定时计划" }[view];
+  $("breadcrumb-title").textContent = viewTitles[view];
   document.title = `${$("breadcrumb-title").textContent} · KillZHS`;
   if (view === "logs") renderLogs(true);
 }
@@ -205,6 +207,7 @@ function updateButtons() {
   $("stop").hidden = !busy;
   $("stop").disabled = unavailable;
   document.querySelectorAll("[data-setting], #settings-form button[type=submit], #quick-settings-form button[type=submit]").forEach((element) => { element.disabled = unavailable || busy; });
+  if (typeof renderFeatures === "function") renderFeatures();
 }
 
 function visibleCourses() {
@@ -367,7 +370,8 @@ function render() {
   $("connection-dot").classList.remove("offline");
   $("offline-banner").hidden = true;
   $("dependency-banner").hidden = !state.missing_dependencies.length || state.demo;
-  $("dependency-banner").textContent = `当前 Python 环境缺少 ${state.missing_dependencies.join("、")}。请使用项目内的「启动学习工作台.bat」启动。`;
+  $("dependency-banner").textContent = `当前 Python 环境缺少 ${state.missing_dependencies.join("、")}。请使用项目内的「启动KillZHS.bat」启动。`;
+  $("app-version").textContent = "KillZHS · " + state.version;
   $("auth-badge").textContent = state.logged_in ? (state.demo ? "演示账号" : "已连接") : "未登录";
   $("auth-badge").className = "badge" + (state.logged_in ? " green" : "");
   const hasQR = Boolean(state.qr && busy && state.action === "login");
@@ -388,7 +392,8 @@ function render() {
   $("progress-section").hidden = !state.progress || !busy || state.action !== "start";
   if (state.progress) {
     $("progress-title").textContent = state.progress.title;
-    $("progress-number").textContent = `${state.progress.value}%`;
+    $("progress-number").textContent = state.progress.phase === "waiting" ? `剩余 ${state.progress.remaining} 秒` : `${state.progress.value}%`;
+    $("video-progress").hidden = state.progress.phase === "waiting";
     $("video-progress").value = state.progress.value;
   }
   renderSettings();
@@ -428,7 +433,8 @@ async function fetchState() {
   })();
   try { await fetching; } finally { fetching = null; }
 }
-async function poll() { await fetchState(); setTimeout(poll, 1000); }
+async function poll() { await fetchState(); setTimeout(poll, document.hidden ? 5000 : 1000); }
+document.addEventListener("visibilitychange", () => { if (!document.hidden) fetchState(); });
 $("today").textContent = new Date().toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric", weekday: "long" });
 setInterval(renderTimer, 1000);
 updateButtons();

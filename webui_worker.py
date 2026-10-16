@@ -6,12 +6,12 @@ import io
 import json
 import logging
 from pathlib import Path
-import re
 import sys
 import time
 
-from webui import PREFIX, atomic_json, course_key, load_json
+from webui import PREFIX, atomic_json, course_key, load_json, normalize_course
 from killzhs_config import AI_DEFAULTS
+from killzhs_privacy import collect_secrets, redact as redact_text
 
 OUTPUT = sys.stdout
 SECRETS = set()
@@ -23,24 +23,11 @@ class AIBudgetExceeded(BaseException):
 
 
 def redact(value):
-    text = str(value)
-    for secret in sorted(SECRETS, key=len, reverse=True):
-        text = text.replace(secret, "[已隐藏]")
-    text = re.sub(r"https?://[^\s'\"]+", lambda m: m[0].split("?")[0] + ("?[已隐藏]" if "?" in m[0] else ""), text)
-    text = re.sub(r"(?i)(cookie|token|password|api[_-]?key|oncePassword|pwd)(\s*[:=]\s*)[^\s,;}]+", r"\1\2[已隐藏]", text)
-    return re.sub(r"\x1b\[[0-9;]*[a-zA-Z]", "", text)[:1500]
+    return redact_text(value, SECRETS)
 
 
 def remember_secrets(value, key=""):
-    if isinstance(value, dict):
-        for name, child in value.items():
-            remember_secrets(child, str(name))
-    elif isinstance(value, list):
-        for child in value:
-            remember_secrets(child, key)
-    elif isinstance(value, str) and len(value) >= 4 and key.lower() in (
-            "value", "password", "token", "api_key", "username", "uuid"):
-        SECRETS.add(value)
+    SECRETS.update(collect_secrets(value, key))
 
 
 def emit(event_type, **values):
@@ -78,6 +65,8 @@ class LogBridge(logging.Handler):
         text = record.getMessage()
         if record.levelno >= logging.ERROR or "captcha" in text.lower():
             ISSUES.add("attention")
+        if "captcha" in text.lower():
+            ISSUES.add("verification")
         if "time limit exceeded" in text.lower():
             ISSUES.add("limited")
         # The original logger can include authentication responses in INFO records.
@@ -139,8 +128,10 @@ def run(payload):
         now = time.monotonic()
         if now - progress_time[0] >= 0.5 or iteration >= total:
             progress_time[0] = now
+            waiting = prefix == "pause a minute"
             emit("progress", value=round(max(0, min(100, iteration / total * 100)), 1) if total else 0,
-                 title=redact(prefix) or "当前视频")
+                 title="短暂暂停，等待继续" if waiting else redact(prefix) or "当前视频",
+                 phase="waiting" if waiting else "video", remaining=max(0, round(total - iteration)) if waiting else None)
 
     legacy.progressBar = progress
     cookie_sources = [runtime / "cookies.json"]
@@ -177,7 +168,7 @@ def run(payload):
         raise ValueError("没有可用的登录状态，请先扫码登录。")
 
     if action in ("login", "refresh"):
-        rows, kinds, failures = [], [], []
+        rows, kinds, failures, incomplete = [], [], [], []
         methods = [("zhidao", client.getZhidaoList, "secret"), ("hike", client.getHikeList, "courseId")]
         if hasattr(client, "getZhidaoAiList"):
             methods.append(("ai", client.getZhidaoAiList, "courseId"))
@@ -186,8 +177,16 @@ def run(payload):
                 result = method()
                 if not isinstance(result, list):
                     raise ValueError("课程接口返回了无法识别的结构，可稍后重试或手动添加课程。")
-                incoming = [{"id": str(c[id_field]), "name": c.get("courseName") or c.get("name") or "未命名课程",
-                             "kind": kind, **({"class_id": str(c["classId"])} if kind == "ai" else {})} for c in result]
+                incoming = []
+                for course in result:
+                    try:
+                        incoming.append(normalize_course({"id": str(course[id_field]),
+                            "name": course.get("courseName") or course.get("name") or "未命名课程",
+                            "kind": kind, **({"class_id": str(course["classId"])} if kind == "ai" else {})}))
+                    except (KeyError, TypeError, ValueError):
+                        if kind not in incomplete:
+                            incomplete.append(kind)
+                        log("已跳过一条不完整的课程数据，其余课程继续同步。", "warning")
                 rows += incoming
                 kinds.append(kind)
             except Exception as error:
@@ -198,10 +197,11 @@ def run(payload):
             raise ValueError("课程同步失败，请检查网络或重新扫码登录。")
         emit("auth", logged_in=True)
         atomic_json(runtime / "cookies.json", cookie_jar_to_list(client.cookies))
-        emit("courses", courses=rows, kinds=kinds)
-        message = f"已同步 {len(rows)} 门课程。" + ("部分课程类型同步失败，请查看日志。" if failures else "")
-        log(message, "warning" if failures else "info")
-        emit("result", message=message, error=bool(failures))
+        emit("courses", courses=rows, kinds=kinds, incomplete_kinds=incomplete)
+        partial = bool(failures or incomplete)
+        message = f"已同步 {len(rows)} 门课程。" + ("部分数据同步不完整，已保留原有课程，请查看日志。" if partial else "")
+        log(message, "warning" if partial else "info")
+        emit("result", message=message, error=partial)
         return
 
     # Count actual generation requests, including the original client's retries.
@@ -238,10 +238,16 @@ def run(payload):
             status = "attention" if "attention" in ISSUES else "limited" if "limited" in ISSUES else "done"
         except Exception as error:
             status = "attention"
+            if type(error).__name__ == "CaptchaException":
+                ISSUES.add("verification")
             log("课程执行失败：" + redact(error), "error")
         attention += status == "attention"
         emit("course", key=key, status=status)
         log(course["name"] + " · " + {"done": "本次任务已运行。", "limited": "已达到本次时限。", "attention": "存在异常，请查看日志。"}[status])
+        if "verification" in ISSUES:
+            emit("result", message="需要手动验证，本批次已停止。请先打开知到官方页面完成验证，再手动开始任务。",
+                 error=True, reason="verification")
+            return
     message = "本次任务已结束。课程完成情况请以平台为准。"
     if attention:
         message = f"本次任务已结束，{attention} 门课程需要查看日志。"

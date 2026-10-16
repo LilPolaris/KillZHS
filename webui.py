@@ -7,6 +7,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import secrets
 import subprocess
 import sys
@@ -19,8 +20,12 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 from urllib.request import urlopen
 import webbrowser
+from uuid import uuid4
 from killzhs_config import (AI_DEFAULTS, PLAN_DEFAULTS, VERSION, InputError,
                            public_ai, validate_ai, validate_plan, next_run)
+from killzhs_notifications import Notifier, validate_notifications, public_notifications
+from killzhs_privacy import collect_secrets, redact
+from killzhs_tasklogs import TaskLogs
 
 ROOT = Path(__file__).resolve().parent
 ASSETS = ROOT / "web"
@@ -96,6 +101,8 @@ class Controller:
         self.closed = threading.Event()
         self.scheduler_thread = None
         self.job_id = 0
+        self.task_id = None
+        self.archive_failed = False
         self.watchdog = None
         self.deadline = None
         self.job_courses = []
@@ -111,10 +118,17 @@ class Controller:
             self.ai = validate_ai(load_json(self.local / "ai.json", {}))
         except InputError:
             self.ai = copy.deepcopy(AI_DEFAULTS)
+        try:
+            self.notifications = validate_notifications(load_json(self.local / "notifications.json", {}))
+        except InputError:
+            self.notifications = validate_notifications({})
+        self.secrets = collect_secrets(self.ai) | collect_secrets(self.notifications)
+        self.task_logs = TaskLogs(Path(self.runtime.name) if demo else self.local)
+        self.notifier = Notifier(lambda message, level: self.log(message, level, archive=False))
         self.history = load_json(self.local / "history.json", [])
         if not isinstance(self.history, list):
             self.history = []
-        self.history = self.history[-100:]
+        self.history = [row for row in self.history if isinstance(row, dict)][-100:]
         schedule_state = load_json(self.local / "schedule-state.json", {})
         self.last_schedule_date = schedule_state.get("date") if isinstance(schedule_state, dict) else None
         self.courses = []
@@ -128,6 +142,7 @@ class Controller:
         self.started_at = None
         self.ended_at = None
         self.result_status = None
+        self.result_reason = None
         self.current = None
         self.message = "准备好后，扫码登录并同步课程。"
         self.dependencies = [name for name, module in MODULES.items() if importlib.util.find_spec(module) is None]
@@ -153,12 +168,21 @@ class Controller:
         self.ai_requests = 0
         self.active_ai_max_requests = None
         self.log("本地工作台已就绪。" + (" 当前为演示模式。" if demo else ""))
+        if not demo:
+            self.recover_history()
 
-    def log(self, message, level="info"):
+    def log(self, message, level="info", *, archive=True):
         with self.lock:
             self.sequence += 1
-            self.logs.append({"id": self.sequence, "time": datetime.now().astimezone().isoformat(),
-                              "message": str(message)[:1500], "level": level})
+            row = {"id": self.sequence, "time": datetime.now().astimezone().isoformat(),
+                   "message": redact(message, self.secrets), "level": level}
+            self.logs.append(row)
+            if archive and self.task_id and not self.archive_failed:
+                try:
+                    self.task_logs.append(self.task_id, row)
+                except OSError:
+                    self.archive_failed = True
+                    self.log("无法保存本次详细日志，请检查用户目录权限或剩余空间。", "warning", archive=False)
 
     def state(self):
         with self.lock:
@@ -171,6 +195,7 @@ class Controller:
                 "plan": self.plan, "next_run": next_run(self.plan, self.last_schedule_date),
                 "history": list(reversed(self.history)), "deadline": self.deadline,
                 "ai_requests": self.ai_requests, "active_ai_max_requests": self.active_ai_max_requests,
+                "notifications": public_notifications(self.notifications),
                 "app": "KillZHS"})
 
     def has_session(self):
@@ -190,7 +215,40 @@ class Controller:
                 if not self.demo:
                     atomic_json(self.local / "ai.json", updated)
                 self.ai = updated
+                self.secrets.update(collect_secrets(updated))
                 self.log("AI 设置已保存，将在下次任务生效，没有发送模型请求。")
+                return
+            if action == "notification_settings":
+                updated = validate_notifications(data.get("notifications"), self.notifications)
+                if not self.demo:
+                    atomic_json(self.local / "notifications.json", updated)
+                self.notifications = updated
+                self.secrets.update(collect_secrets(updated))
+                self.log("通知设置已保存。保存不会发送消息。")
+                return
+            if action == "test_notification":
+                config = validate_notifications({**self.notifications, "enabled": True})
+                if self.demo:
+                    self.log("演示模式：测试通知已模拟，未连接推送服务。")
+                else:
+                    self.notifier.submit(config, "test", "KillZHS 测试通知",
+                                         "通知渠道已连接。任务提醒仅包含运行状态，不包含密钥或课程内容。", test=True)
+                return
+            if action == "plan":
+                plan = validate_plan(data.get("plan"), {course_key(c) for c in self.courses})
+                if plan["enabled"] and not self.settings["remember"]:
+                    raise InputError("定时任务需要记住登录状态，请先在偏好设置中开启。")
+                if not self.demo:
+                    atomic_json(self.local / "plan.json", plan)
+                self.plan = plan
+                self.log("定时计划已保存，当前任务不受影响。" if plan["enabled"] else "未来定时计划已暂停，当前任务不受影响。")
+                return
+            if action == "pause_plan":
+                updated = {**self.plan, "enabled": False}
+                if not self.demo:
+                    atomic_json(self.local / "plan.json", updated)
+                self.plan = updated
+                self.log("未来定时计划已暂停，当前任务不受影响。")
                 return
             if self.status == "running" or (self.thread and self.thread.is_alive()):
                 raise InputError("已有任务正在运行，请等待结束或先停止。")
@@ -204,20 +262,6 @@ class Controller:
                     if not self.settings["remember"]:
                         (self.local / "cookies.json").unlink(missing_ok=True)
                 self.log("运行设置已保存。")
-                return
-            if action == "plan":
-                plan = validate_plan(data.get("plan"), {course_key(c) for c in self.courses})
-                if plan["enabled"] and not self.settings["remember"]:
-                    raise InputError("定时任务需要记住登录状态，请先在偏好设置中开启。")
-                self.plan = plan
-                if not self.demo:
-                    atomic_json(self.local / "plan.json", plan)
-                self.log("定时计划已保存。" if plan["enabled"] else "定时计划已暂停。")
-                return
-            if action == "pause_plan":
-                self.plan["enabled"] = False
-                if not self.demo:
-                    atomic_json(self.local / "plan.json", self.plan)
                 return
             if action == "add":
                 course = normalize_course(data.get("course"))
@@ -253,8 +297,17 @@ class Controller:
             self.ai_requests = 0
             self.active_ai_max_requests = self.ai["max_requests"] if action == "start" else None
             self.result_status, self.ended_at = None, None
+            self.result_reason = None
             self.qr, self.progress, self.current = None, None, None
             self.started_at = time.time()
+            self.task_id, self.archive_failed = uuid4().hex, False
+            try:
+                if not self.demo:
+                    atomic_json(self.local / "active-task.json", self.history_row())
+            except OSError:
+                self.archive_failed = True
+                self.log("无法保存任务日志索引，本次仅保留会话日志。", "warning", archive=False)
+            self.log("任务开始：" + action)
             self.message = {"login": "正在连接登录服务…", "refresh": "正在同步课程…", "start": "正在准备学习任务…", "test_ai": "正在检查模型服务…", "diagnose": "正在检查运行环境…"}[action]
             minutes = self.settings["budget_minutes"] if budget is None else budget
             self.deadline = self.started_at + minutes * 60 if action == "start" and minutes else None
@@ -289,14 +342,27 @@ class Controller:
             elif event_type == "auth":
                 self.logged_in = bool(event["logged_in"])
                 self.qr = None
+                if not self.logged_in:
+                    self.result_reason = "auth"
             elif event_type == "courses":
                 # Never discard a course category when only the other API succeeds.
                 kinds = set(event.get("kinds", ["hike", "zhidao", "auto"]))
-                rows = [normalize_course(row) for row in event["courses"]]
-                self.courses = rows + [c for c in self.courses if c["kind"] not in kinds and course_key(c) not in {course_key(r) for r in rows}]
+                rows, invalid_kinds = [], set(event.get("incomplete_kinds", []))
+                for row in event["courses"]:
+                    try:
+                        course = normalize_course(row)
+                        if course_key(course) not in {course_key(c) for c in rows}:
+                            rows.append(course)
+                    except InputError:
+                        invalid_kinds.add(row.get("kind") if isinstance(row, dict) else None)
+                        self.log("已跳过一条无法识别的课程数据，其余课程继续同步。", "warning")
+                # An incomplete category must not erase previously saved entries.
+                replace_kinds = kinds - invalid_kinds if None not in invalid_kinds else set()
+                self.courses = rows + [c for c in self.courses if c["kind"] not in replace_kinds and course_key(c) not in {course_key(r) for r in rows}]
                 self.persist_courses()
             elif event_type == "progress":
-                self.progress = {"value": event["value"], "title": event.get("title", "当前视频")}
+                self.progress = {"value": event["value"], "title": event.get("title", "当前视频"),
+                                 "phase": event.get("phase", "video"), "remaining": event.get("remaining")}
             elif event_type == "ai_usage":
                 self.ai_requests = event["count"]
             elif event_type == "course":
@@ -307,11 +373,13 @@ class Controller:
                         course["status"] = event["status"]
                         self.message = event.get("message", course["name"])
             elif event_type == "result":
-                self.message = event["message"]
+                self.message = redact(event["message"], self.secrets)
                 self.result_status = "error" if event.get("error") else "done"
+                self.result_reason = event.get("reason") or self.result_reason
 
     def run_job(self, payload):
         process = None
+        frozen, job_folder = False, None
         try:
             if self.demo:
                 self.run_demo(payload)
@@ -363,14 +431,21 @@ class Controller:
         finally:
             if self.watchdog:
                 self.watchdog.cancel()
-            if process is not None:
-                if process.poll() is None:
-                    process.terminate()
-                    process.wait(timeout=5)
-                if process.stdout:
-                    process.stdout.close()
-                if process.stdin and not process.stdin.closed:
-                    process.stdin.close()
+            try:
+                if process is not None:
+                    if process.poll() is None:
+                        process.terminate()
+                        try:
+                            process.wait(timeout=3)
+                        except subprocess.TimeoutExpired:
+                            process.kill()
+                            process.wait(timeout=3)
+                    if process.stdout:
+                        process.stdout.close()
+                    if process.stdin and not process.stdin.closed:
+                        process.stdin.close()
+            except (OSError, subprocess.TimeoutExpired):
+                self.log("运行进程清理失败，请退出程序后检查后台进程。", "warning")
             with self.lock:
                 if self.status == "running":
                     self.status = self.result_status or "done"
@@ -380,6 +455,11 @@ class Controller:
                     if course["status"] in ("queued", "running"):
                         course["status"] = self.status if self.status in ("stopped", "limited") else "attention"
                 self.record_history()
+            if frozen and job_folder is not None:
+                try:
+                    (job_folder / "input.json").unlink(missing_ok=True)
+                except OSError:
+                    self.log("临时任务配置未能删除，退出程序时将再次清理。", "warning", archive=False)
 
     @staticmethod
     def file_events(process, path):
@@ -397,14 +477,78 @@ class Controller:
                 else:
                     time.sleep(0.05)
 
-    def record_history(self):
-        self.history.append({"started_at": self.started_at, "ended_at": self.ended_at,
+    def history_row(self):
+        return {"id": self.task_id, "started_at": self.started_at, "ended_at": self.ended_at,
             "action": self.action, "origin": self.origin, "status": self.status,
             "message": self.message, "courses": [c["name"] for c in self.job_courses],
-            "ai_requests": self.ai_requests})
+            "ai_requests": self.ai_requests}
+
+    def save_history(self):
         self.history = self.history[-100:]
         if not self.demo:
             atomic_json(self.local / "history.json", self.history)
+        self.task_logs.prune({row.get("id") for row in self.history} | {self.task_id})
+
+    def record_history(self):
+        self.log(self.message, "warning" if self.status in ("error", "limited", "stopped") else "info")
+        row = self.history_row()
+        row["has_log"] = self.task_logs.path(self.task_id).is_file()
+        self.history.append(row)
+        self.task_id = None
+        try:
+            self.save_history()
+            if not self.demo:
+                (self.local / "active-task.json").unlink(missing_ok=True)
+        except OSError:
+            self.log("无法保存任务历史，请检查用户目录权限。", "warning", archive=False)
+        if self.action == "start" or self.result_reason == "auth":
+            event = self.result_reason if self.result_reason in ("verification", "auth") else "finished"
+            title = {"verification": "KillZHS 需要手动验证", "auth": "KillZHS 登录状态需要检查"}.get(
+                event, "KillZHS 任务需要查看" if self.status == "error" else "KillZHS 本次任务已结束")
+            body = {"verification": "本批次已停止。请打开知到官方页面完成验证后，再手动开始任务。",
+                    "auth": "当前任务无法使用或确认登录状态，请先检查网络并同步课程，必要时重新扫码。"}.get(
+                        event, "请在历史记录中查看本次结果和详细日志。课程完成情况以平台为准。")
+            self.notify(event, title, body, task_id=row["id"])
+
+    def recover_history(self):
+        active = load_json(self.local / "active-task.json", {})
+        if not isinstance(active, dict) or not re.fullmatch(r"[0-9a-f]{32}", str(active.get("id", ""))):
+            return
+        try:
+            if active["id"] not in {row.get("id") for row in self.history} and isinstance(active.get("started_at"), (int, float)):
+                row = {**active, "ended_at": time.time(), "status": "interrupted",
+                       "message": "上次程序意外退出，任务已中断；可查看退出前保存的日志。",
+                       "has_log": self.task_logs.path(active["id"]).is_file()}
+                self.history.append(row)
+                self.save_history()
+                self.log(row["message"], "warning")
+            (self.local / "active-task.json").unlink(missing_ok=True)
+        except OSError:
+            self.log("无法恢复上次任务记录，请检查用户目录权限。", "warning")
+
+    def task_log(self, task_id):
+        with self.lock:
+            if task_id not in {row.get("id") for row in self.history} | {self.task_id}:
+                raise InputError("任务记录不存在，旧版记录可能没有详细日志。")
+        try:
+            return self.task_logs.read(task_id)
+        except (OSError, ValueError) as error:
+            raise InputError("详细日志不存在或已清理。") from error
+
+    def notification_report(self, message, level, task_id):
+        with self.lock:
+            self.log(message, level, archive=False)
+            if task_id and task_id in {row.get("id") for row in self.history}:
+                try:
+                    self.task_logs.append(task_id, {"time": datetime.now().astimezone().isoformat(),
+                                                  "level": level, "message": redact(message, self.secrets)})
+                except OSError:
+                    self.log("无法保存通知结果到任务日志。", "warning", archive=False)
+
+    def notify(self, event, title, body, *, task_id=None):
+        if not self.demo:
+            self.notifier.submit(self.notifications, event, title, body,
+                                 report=lambda message, level: self.notification_report(message, level, task_id))
 
     def expire(self, job_id):
         self.stop(reason="limited", expected_job=job_id)
@@ -434,7 +578,9 @@ class Controller:
                 atomic_json(self.local / "schedule-state.json", {"date": today})
             self.last_schedule_date = today
             reason = None
-            if (now - due).total_seconds() >= 60:
+            late = (now - due).total_seconds()
+            catchup = self.plan.get("catchup_minutes", 0)
+            if late >= 60 and (not catchup or late > catchup * 60):
                 reason = "已错过计划时间，当天不补跑。"
             elif self.status == "running":
                 reason = "已有任务正在运行，本次定时任务已跳过。"
@@ -447,9 +593,8 @@ class Controller:
             self.log("定时任务未启动：" + reason, "warning")
             self.history.append({"started_at": now.timestamp(), "ended_at": now.timestamp(), "action": "start",
                 "origin": "schedule", "status": "skipped", "message": reason, "courses": [], "ai_requests": 0})
-            self.history = self.history[-100:]
-            if not self.demo:
-                atomic_json(self.local / "history.json", self.history)
+            self.save_history()
+            self.notify("skipped", "KillZHS 定时计划已跳过", reason + " 请打开工作台查看计划及登录状态。")
 
     def run_demo(self, payload):
         self.log("演示操作：" + payload["action"] + "，不会连接智慧树。")
@@ -502,6 +647,7 @@ class Controller:
         self.stop()
         if self.thread and self.thread.is_alive() and self.thread is not threading.current_thread():
             self.thread.join(timeout=5)
+        self.notifier.close()
         self.runtime.cleanup()
 
 
@@ -536,6 +682,15 @@ class Handler(BaseHTTPRequestHandler):
         path = urlsplit(self.path).path
         if path == "/api/state":
             self.send_content(200, self.server.controller.state())
+            return
+        if path.startswith("/api/task-log/"):
+            if not secrets.compare_digest(self.headers.get("X-Local-Token", ""), self.server.controller.token):
+                self.send_content(403, {"error": "页面已失效，请刷新后再试。"})
+                return
+            try:
+                self.send_content(200, self.server.controller.task_log(path.removeprefix("/api/task-log/")))
+            except InputError as error:
+                self.send_content(404, {"error": str(error)})
             return
         allowed = {"/": ("index.html", "text/html; charset=utf-8"),
                    "/app.js": ("app.js", "text/javascript; charset=utf-8"),
