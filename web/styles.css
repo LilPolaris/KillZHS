@@ -1,3 +1,4 @@
+.brand { padding-left:5px; padding-right:5px; font-size:20px; letter-spacing:-.5px; }
 :root {
   --bg:#f5f7f4;
   --surface:#fff;
@@ -2659,4 +2660,50 @@ input:not([type=checkbox]),select {
     transition:none!important;
     scroll-behavior:auto!important;
   }
+}
+
+.brand { padding:0 5px; font-size:20px; letter-spacing:-.5px; }
+.sidebar-note { margin-top:25px; padding-top:18px; }
+.setting-row select { width:180px; flex:none; }
+.setting-row input[type=url],.setting-row input[type=password],#ai-model { width:320px; }
+.setting-row.slim { padding:10px 27px; }
+.setting-row.slim .remember-row { margin:0; }
+.advanced-fields { border-top:1px solid var(--line); }
+.advanced-fields>summary { padding:20px 27px; font-size:13px; cursor:pointer; color:var(--green); }
+.advanced-fields>p { padding:0 27px; font-size:11px; color:#87967e; }
+.plan-summary { max-width:850px; padding:22px 27px; display:flex; align-items:center; gap:17px; margin-bottom:22px; }
+.plan-summary>div { flex:1; }
+.plan-summary>div>span { display:block; font-size:11px; color:#9ca78f; }
+.plan-summary strong { font-size:16px; font-weight:500; }
+.plan-days { padding:20px 27px; border:0; border-top:1px solid var(--line); margin:0; }
+.plan-days legend { font-size:12px; color:#7a8b6e; padding:0; }
+.plan-days>div { display:flex; flex-wrap:wrap; gap:12px; padding-top:8px; }
+.plan-days label { display:flex; gap:6px; align-items:center; font-size:12px; color:#7d8e70; }
+.plan-courses-heading { border-top:1px solid var(--line); padding:19px 27px; display:flex; justify-content:space-between; gap:16px; }
+.plan-courses-heading h3 { font-size:13px; margin:0; font-weight:500; }
+.plan-course { display:flex; align-items:center; gap:12px; padding:14px 27px; border-top:1px solid #f1f3ed; font-size:13px; cursor:pointer; }
+.plan-course>.badge { margin-left:auto; }
+.history-panel { margin-top:24px; }
+.history-row { padding:18px 24px; border-top:1px solid var(--line); display:flex; align-items:flex-start; justify-content:space-between; gap:18px; }
+.history-row strong { font-size:12px; font-weight:500; }
+.history-row strong .badge { margin-left:10px; }
+.history-row p { color:#829174; font-size:12px; margin:7px 0; }
+.history-row div>span { font-size:10px; color:#a4ae99; }
+.app-controls { margin-top:22px; padding:23px 27px; }
+.app-controls h2 { margin:0 0 5px; font-size:14px; font-weight:500; }
+.app-controls p { font-size:11px; color:#8c9b7f; margin:0 0 18px; }
+@media(max-width:960px) { .brand { padding:0; }.sidebar-note { display:none; } }
+@media(max-width:760px) {
+  .setting-row input[type=url],.setting-row input[type=password],#ai-model { width:100%; }
+  .setting-row:has(input[type=url]),.setting-row:has(input[type=password]),.setting-row:has(#ai-model) { flex-wrap:wrap; }
+  .plan-summary { padding:19px; }.plan-summary strong { font-size:13px; }
+  .plan-courses-heading { flex-wrap:wrap; }.setting-row select { width:140px; }
+}
+@media(max-width:500px) {
+  .plan-summary { align-items:flex-start; flex-wrap:wrap; gap:12px; }.plan-summary .stat-icon { display:none; }
+  .plan-summary strong { font-size:12px; }.plan-days { padding:18px; }.plan-days>div { gap:12px; }
+  .plan-course { padding:14px 18px; font-size:12px; }.plan-courses-heading { padding:18px; }
+  .advanced-fields>summary { padding:18px; }.setting-row select { width:100%; }
+  .app-controls { padding:19px; }.app-controls .heading-actions { flex-wrap:wrap; }
+  .history-row { padding:16px; }.history-row p { font-size:11px; }.history-row strong { font-size:11px; }
 }

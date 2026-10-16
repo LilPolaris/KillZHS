@@ -1276,7 +1276,10 @@ class Fucker:
 
             begin_time = time.time()  # real world time
             prefix = self.prefix  # prefix for tree-like print
-            w_lim = os.get_terminal_size().columns-1  # width limit for terminal output
+            try:
+                w_lim = os.get_terminal_size().columns-1
+            except OSError:
+                w_lim = 80  # Browser and packaged workers have no terminal.
 
             cakeThemeList = knowledgePoints.cakeThemeList
         except Exception as e:
@@ -1483,7 +1486,7 @@ class Fucker:
 
                     # 将ppt转为text
                     if ppt_conf.get("provide_to_ai", False) and moonShot_conf.get("api_key", ""):
-                        ppt2txt = PptToTxt(moonShotKey=moonShot_conf.get("api_key", ""),baseUrl=moonShot_conf.get("base_url","https://api.moonshot.cn/v1"))
+                        ppt2txt = PptToTxt(moonShotKey=moonShot_conf.get("api_key", ""),baseUrl=moonShot_conf.get("base_url","https://api.moonshot.cn/v1"), delete_immediately=moonShot_conf.get("delete_after_convert", True))
                         for ppt in ppts:
                             try:
                                 content = ppt2txt.parseTxt(ppt["url"])
@@ -2023,7 +2026,10 @@ class Openai:
                 continue
 
     def openaiCompletion(self, prompt: str, aimStart: str = "```answer", aimEnd: str = "```", max_retries: int = 3, retry_delay: float = 1.0) -> str:
-        url = f"{self.baseUrl}/v1/chat/completions"
+        api_root = self.baseUrl.rstrip("/")
+        if not urlparse(api_root).path:
+            api_root += "/v1"
+        url = f"{api_root}/chat/completions"
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.apiKey}",
@@ -2180,7 +2186,7 @@ class Openai:
 
         # 如果大于32ktoken，取后32ktoken
         if len(tokens) > 27.900 * 1000:
-            tokens = tokens[-27.900 * 1000:]
+            tokens = tokens[-27900:]
 
             prompt = self.encoder.decode(tokens)
             logger.warning(
@@ -2228,7 +2234,7 @@ class PptToTxt:
         self.__download_path = getRealPath("AiDownloadCache")
         self.__client = OpenAI(
             api_key=self.__moonShotKey,
-            base_url="https://api.moonshot.cn/v1",
+            base_url=baseUrl,
         )
         self.__max_file_size = max_file_size_mb * 1024 * 1024  # Convert to bytes
         self.__max_cache_files = max_cache_files
@@ -2239,13 +2245,8 @@ class PptToTxt:
         self.__initialize_cache()
 
     def __initialize_cache(self):
-        file_list = self.__client.files.list()
-        for file in file_list.data:
-            self.__file_cache[file.filename] = {
-                'id': file.id,
-                'size': file.bytes,
-                'created_at': file.created_at
-            }
+        # Manage only uploads created by this instance, never unrelated user files.
+        self.__file_cache = {}
 
     def parseTxt(self, url: str) -> str:
         try:
@@ -2264,8 +2265,9 @@ class PptToTxt:
             return ""
 
     def __getFilePath(self, url: str) -> str:
-        parsed_url = urlparse(url)
-        file_path = parsed_url.path.lstrip('/')
+        suffix = Path(urlparse(url).path).suffix.lower()
+        suffix = suffix if suffix in (".pdf", ".ppt", ".pptx", ".doc", ".docx", ".txt") else ".bin"
+        file_path = hashlib.sha256(url.encode("utf-8")).hexdigest() + suffix
         local_path = os.path.join(self.__download_path, file_path)
 
         if os.path.exists(local_path):
@@ -2275,10 +2277,11 @@ class PptToTxt:
         return self.__downloadFile(url)
 
     def __downloadFile(self, url: str) -> str:
-        response = self.__session.get(url, stream=True)
+        response = self.__session.get(url, stream=True, timeout=30)
         if response.status_code == 200:
-            parsed_url = urlparse(url)
-            file_path = parsed_url.path.lstrip('/')
+            suffix = Path(urlparse(url).path).suffix.lower()
+            suffix = suffix if suffix in (".pdf", ".ppt", ".pptx", ".doc", ".docx", ".txt") else ".bin"
+            file_path = hashlib.sha256(url.encode("utf-8")).hexdigest() + suffix
             local_path = os.path.join(self.__download_path, file_path)
 
             os.makedirs(os.path.dirname(local_path), exist_ok=True)

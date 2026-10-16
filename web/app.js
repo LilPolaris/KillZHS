@@ -46,8 +46,8 @@ let previousStarted = null;
 
 const statusLabels = { ready: ["待开始", ""], queued: ["排队中", "amber"], running: ["运行中", "green"],
   done: ["已运行", "blue"], attention: ["需要查看", "red"], limited: ["达到时限", "amber"], stopped: ["已停止", ""] };
-const typeLabels = { auto: "自动识别", zhidao: "共享课", hike: "校内课" };
-const keyOf = (course) => `${course.kind}:${course.id}`;
+const typeLabels = { auto: "自动识别", zhidao: "共享课", hike: "校内课", ai: "AI 课程" };
+const keyOf = (course) => `${course.kind}:${course.id}${course.kind === "ai" ? ":" + course.class_id : ""}`;
 const escape = (value) => String(value).replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
 function toast(message, error = false) {
@@ -59,17 +59,17 @@ function toast(message, error = false) {
 }
 
 function route() {
-  const view = ["overview", "logs", "settings", "guide"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "overview";
+  const view = ["overview", "logs", "settings", "ai", "plan", "guide"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "overview";
   document.querySelectorAll(".view").forEach((element) => { element.hidden = element.id !== `view-${view}`; });
   document.querySelectorAll(".nav-link").forEach((element) => {
     element.classList.toggle("active", element.dataset.view === view);
     if (element.dataset.view === view) element.setAttribute("aria-current", "page");
     else element.removeAttribute("aria-current");
     // Icon-only navigation remains labelled on narrow screens.
-    element.setAttribute("aria-label", { overview: "学习概览", logs: "运行日志", settings: "偏好设置", guide: "使用指南" }[element.dataset.view]);
+    element.setAttribute("aria-label", { overview: "学习概览", logs: "运行日志", settings: "偏好设置", guide: "使用指南", ai: "AI 配置", plan: "定时计划" }[element.dataset.view]);
   });
-  $("breadcrumb-title").textContent = { overview: "学习概览", logs: "运行日志", settings: "偏好设置", guide: "使用指南" }[view];
-  document.title = `${$("breadcrumb-title").textContent} · 知序`;
+  $("breadcrumb-title").textContent = { overview: "学习概览", logs: "运行日志", settings: "偏好设置", guide: "使用指南", ai: "AI 配置", plan: "定时计划" }[view];
+  document.title = `${$("breadcrumb-title").textContent} · KillZHS`;
   if (view === "logs") renderLogs(true);
 }
 window.addEventListener("hashchange", route);
@@ -122,7 +122,7 @@ function readSettings() {
     speed: $("setting-speed").value.trim() === "" ? null : Number($("setting-speed").value),
     limit: Number($("setting-limit").value),
     threshold: Number($("setting-threshold").value),
-    remember: $("setting-remember").checked
+    remember: $("setting-remember").checked, budget_minutes: Number($("setting-budget").value)
   };
 }
 
@@ -172,7 +172,7 @@ $("settings-form").addEventListener("submit", saveSettings);
 $("reset-settings").addEventListener("click", () => {
   if (!state) return;
   const previous = state.settings;
-  state.settings = { speed: null, limit: 0, threshold: 0.91, remember: true };
+  state.settings = { speed: null, limit: 0, threshold: 0.91, remember: true, budget_minutes: 0 };
   renderSettings(true);
   state.settings = previous;
   settingsDirty = true;
@@ -301,7 +301,7 @@ $("log-filter").addEventListener("change", () => renderLogs(true));
 $("clear-logs").addEventListener("click", () => { hiddenThrough = state?.logs.at(-1)?.id || 0; renderLogs(true); });
 $("export-logs").addEventListener("click", () => {
   if (!state) return;
-  const content = "知序 · 本地工作台运行日志" + (state.demo ? "（演示）" : "") + "\n\n"
+  const content = "KillZHS · 本地工作台运行日志" + (state.demo ? "（演示）" : "") + "\n\n"
     + state.logs.map((row) => `${new Date(row.time).toLocaleString("zh-CN")} [${row.level}] ${row.message}`).join("\n");
   const url = URL.createObjectURL(new Blob(["\ufeff", content], { type: "text/plain;charset=utf-8" }));
   const link = document.createElement("a");
@@ -328,13 +328,17 @@ $("add-form").addEventListener("submit", async (event) => {
       const shared = params.get("recruitAndCourseId") || hashParams.get("recruitAndCourseId");
       id = shared || params.get("courseId") || hashParams.get("courseId") || "";
       if (!id) throw new Error("地址中没有找到 courseId 或 recruitAndCourseId。");
-      if (kind === "auto") kind = shared ? "zhidao" : "hike";
+      const classId = params.get("classId") || hashParams.get("classId");
+      if (classId) { kind = "ai"; $("course-class-id").value = classId; }
+      else if (kind === "auto") kind = shared ? "zhidao" : "hike";
     }
     pending = true;
     $("add-form").querySelector("[type=submit]").disabled = true;
-    await api({ action: "add", course: { id, name: $("course-name").value.trim(), kind } });
+    await api({ action: "add", course: { id, name: $("course-name").value.trim(), kind, class_id: $("course-class-id").value.trim() } });
     $("course-dialog").close();
     $("add-form").reset();
+    $("class-id-field").hidden = true;
+    $("course-class-id").required = false;
     courseFilter = "all";
     document.querySelectorAll("[data-filter]").forEach((button) => { const all = button.dataset.filter === "all"; button.classList.toggle("selected", all); button.setAttribute("aria-pressed", String(all)); });
     $("search").value = "";
@@ -374,7 +378,7 @@ function render() {
   $("login-title").textContent = hasQR ? "打开知到 App，扫一扫" : state.logged_in ? "账号已连接，准备就绪" : "连接你的知到账号";
   $("login-description").innerHTML = hasQR ? "扫码后请在手机上确认<br>二维码过期后会自动刷新" : state.demo ? "当前所有课程和运行均为本地模拟<br>不会连接真实账号" : state.logged_in ? "选择想学的课程，就可以开始了<br>需要换账号时可重新扫码" : "使用知到 App 扫码登录<br>已有登录状态可直接尝试同步";
   $("login-button-label").textContent = busy && state.action === "login" ? "等待扫码确认…" : state.logged_in ? "重新扫码登录" : "扫码登录";
-  const taskLabel = { idle: "等待开始", running: state.action === "start" ? "正在学习" : state.action === "login" ? "正在登录" : "正在同步", done: "任务已结束", error: "需要查看", stopped: "已停止" }[state.status] || "等待开始";
+  const taskLabel = { idle: "等待开始", running: state.action === "start" ? "正在学习" : state.action === "login" ? "正在登录" : "正在同步", done: "任务已结束", error: "需要查看", stopped: "已停止", limited: "达到时长" }[state.status] || "等待开始";
   $("task-status").textContent = taskLabel;
   $("task-status").className = "badge" + (busy ? " green" : state.status === "error" ? " red" : "");
   $("task-message").textContent = state.message;
@@ -391,6 +395,7 @@ function render() {
   renderCourses();
   renderLogs();
   renderTimer();
+  if (typeof renderFeatures === "function") renderFeatures();
 }
 
 let fetching = null;

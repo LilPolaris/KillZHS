@@ -1,0 +1,39 @@
+      <section id="view-ai" class="view" hidden>
+        <div class="page-heading"><div><div class="eyebrow">YOUR MODEL, YOUR CHOICE</div><h1>AI 配置<span class="heading-dot">。</span></h1><p>用于 AI 课程。保存配置不会发送模型请求，密钥仅保存在本机。</p></div><span class="badge green" id="ai-usage">本次生成请求 0 次</span></div>
+        <section class="panel settings-panel"><div class="panel-heading"><div><h2>答题与模型服务</h2><p>默认跳过测验，需要时再开启 AI 答题。</p></div><span class="stat-icon sage" data-icon="layers"></span></div>
+          <form id="ai-form">
+            <div class="setting-row"><div><label for="ai-enabled">启用 AI</label><p>使用平台 AI，或填写兼容 Chat Completions 的服务。</p></div><input id="ai-enabled" type="checkbox"></div>
+            <div class="setting-row"><div><label for="ai-no-exam">跳过测验</label><p>开启时只处理课程资源；关闭后才允许 AI 处理测验。</p></div><input id="ai-no-exam" type="checkbox" checked></div>
+            <div class="setting-row"><div><label for="ai-source">模型来源</label><p>平台 AI 使用当前知到登录会话。</p></div><select id="ai-source"><option value="platform">平台 AI</option><option value="custom">自定义服务</option></select></div>
+            <div id="custom-ai-fields">
+              <div class="setting-row"><div><label for="ai-base">API 地址</label><p>例如 https://你的服务地址/v1，末尾不用加 chat/completions。</p></div><input id="ai-base" type="url" value="https://api.openai.com/v1" required maxlength="500"></div>
+              <div class="setting-row"><div><label for="ai-key">API Key</label><p id="ai-key-state">尚未保存密钥。留空不会覆盖已有密钥。</p></div><input id="ai-key" type="password" autocomplete="new-password" maxlength="500" placeholder="填写新密钥"></div>
+              <div class="setting-row slim"><label class="remember-row"><input id="ai-clear-key" type="checkbox">清除已保存的模型密钥</label></div>
+              <div class="setting-row"><div><label for="ai-model">模型名称</label><p>填写服务商提供的准确模型 ID。</p></div><input id="ai-model" type="text" maxlength="160" placeholder="model-id"></div>
+            </div>
+            <div class="setting-row"><div><label for="ai-stream">流式响应</label><p>适用于支持流式响应的模型服务。</p></div><input id="ai-stream" type="checkbox" checked></div>
+            <div class="setting-row"><div><label for="ai-max">单次任务生成请求上限</label><p>包含失败后的重试次数，达到上限后停止任务；不代表金额预算。</p></div><input id="ai-max" type="number" min="1" max="100" step="1" value="10" required></div>
+            <details class="advanced-fields"><summary>PPT 参考资料</summary><p>开启后会把相关课件交给所填服务处理，可能产生服务费用。</p>
+              <div class="setting-row"><div><label for="ppt-enabled">允许使用 PPT 参考资料</label></div><input id="ppt-enabled" type="checkbox"></div>
+              <div class="setting-row"><div><label for="ppt-base">文件处理服务地址</label></div><input id="ppt-base" type="url" required value="https://api.moonshot.cn/v1" maxlength="500"></div>
+              <div class="setting-row"><div><label for="ppt-key">文件处理 API Key</label><p id="ppt-key-state">留空保留原密钥。</p></div><input id="ppt-key" type="password" autocomplete="new-password" maxlength="500"></div>
+              <div class="setting-row slim"><label class="remember-row"><input id="ppt-clear-key" type="checkbox">清除已保存的文件处理密钥</label></div>
+              <div class="setting-row"><div><label for="ppt-delete">转换后删除服务端文件</label><p>只针对本次课件处理使用的文件。</p></div><input id="ppt-delete" type="checkbox" checked></div>
+            </details>
+            <div class="settings-actions"><button class="button secondary" id="test-ai" type="button" data-feature-button>检查模型列表</button><button class="button primary" type="submit" data-feature-button><span data-icon="check"></span>保存 AI 配置</button></div>
+          </form><p class="panel-footnote">模型列表检查仅请求服务的 /models 接口，不发送答题内容。列表可访问不代表所有生成请求都能成功。</p>
+        </section>
+      </section>
+
+      <section id="view-plan" class="view" hidden>
+        <div class="page-heading"><div><div class="eyebrow">A LITTLE, EVERY DAY</div><h1>每天，留出一点时间<span class="heading-dot">。</span></h1><p>电脑开机联网、KillZHS 保持后台运行时，计划会自动执行。</p></div><span class="badge" id="plan-status">计划未启用</span></div>
+        <section class="plan-summary panel"><span class="stat-icon sage" data-icon="calendar"></span><div><span>下次执行</span><strong id="next-run">保存并启用计划后显示</strong></div><button class="button secondary small" id="pause-plan" data-feature-button>暂停计划</button></section>
+        <section class="panel settings-panel"><div class="panel-heading"><div><h2>每日计划</h2><p>同一天最多触发一次；错过时间不补跑，已有任务运行时跳过。</p></div></div><form id="plan-form">
+          <div class="setting-row"><div><label for="plan-enabled">启用计划</label><p>启用前需要记住登录状态，登录过期时会记录原因。</p></div><input id="plan-enabled" type="checkbox"></div>
+          <div class="setting-row"><div><label for="plan-time">每天开始时间</label><p>按这台电脑的本地时间执行。</p></div><input id="plan-time" type="time" value="20:00" required></div>
+          <div class="setting-row"><div><label for="plan-minutes">整批任务总时长</label><p>所有选中课程共用这段时间，到时结束本次运行。</p></div><div class="input-suffix"><input id="plan-minutes" type="number" min="1" max="240" step="1" value="30" required><span>分钟</span></div></div>
+          <fieldset class="plan-days"><legend>执行日</legend><div id="plan-days"></div></fieldset>
+          <div class="plan-courses-heading"><h3>要运行的课程</h3><button class="text-button" id="plan-use-selection" type="button">使用概览中的已选课程</button></div><div id="plan-courses" class="plan-courses"></div>
+          <div class="settings-actions"><button class="button primary" type="submit" data-feature-button><span data-icon="check"></span>保存计划</button></div>
+        </form><p class="panel-footnote">本版本不会自动开机、唤醒电脑或注册开机启动项。关闭控制窗口或退出程序后，计划暂停等待；下次启动不会补跑已错过的任务。</p></section>
+      </section>

@@ -11,10 +11,15 @@ import sys
 import time
 
 from webui import PREFIX, atomic_json, course_key, load_json
+from killzhs_config import AI_DEFAULTS
 
 OUTPUT = sys.stdout
 SECRETS = set()
 ISSUES = set()
+
+
+class AIBudgetExceeded(BaseException):
+    """Escape legacy retry/continue handlers when the user budget is exhausted."""
 
 
 def redact(value):
@@ -84,16 +89,47 @@ class LogBridge(logging.Handler):
 def run(payload):
     root, local, runtime = (Path(payload[key]) for key in ("root", "local", "runtime"))
     config = load_json(root / "config.json", {})
+    ai = payload.get("ai", AI_DEFAULTS)
+    remember_secrets(ai)
     remember_secrets(config)
+    action = payload["action"]
+    if action == "test_ai":
+        import requests
+        if ai["use_zhidao_ai"]:
+            raise ValueError("平台 AI 使用登录会话，不支持独立模型列表检查。")
+        provider = ai["openai"]
+        if not provider["api_key"]:
+            raise ValueError("请先保存自定义服务的 API Key。")
+        response = requests.get(provider["api_base"].rstrip("/") + "/models",
+            headers={"Authorization": "Bearer " + provider["api_key"]}, timeout=15)
+        response.raise_for_status()
+        models = response.json().get("data", [])
+        available = any(isinstance(model, dict) and model.get("id") == provider["model_name"] for model in models)
+        message = "模型服务可访问，已找到所填模型。" if available else "模型服务可访问，列表未包含所填模型；请与服务商核对模型名称。"
+        log(message, "info" if available else "warning")
+        emit("result", message=message, error=False)
+        return
     # Redirect legacy log files into this server's temporary directory.
     import utils
     real_path = utils.getRealPath
-    utils.getRealPath = lambda path: str(runtime / "logs") if str(path) in ("logs", "./logs") else real_path(path)
+    def user_path(path):
+        relative = str(path).replace("\\", "/").removeprefix("./")
+        if relative == "logs":
+            return str(runtime / "logs")
+        if relative.split("/")[0] in ("aiexamAnswer", "AiDownloadCache"):
+            target = (local / relative).resolve()
+            if target.is_relative_to(local.resolve()):
+                return str(target)
+        return real_path(path)
+    utils.getRealPath = user_path
     from logger import logger
     logger.setLevel("INFO")
     logger.addHandler(LogBridge())
     import fucker as legacy
     from utils import cookie_jar_to_list
+    if action == "diagnose":
+        emit("result", message="运行环境检查通过，Python 依赖与课程模块均可加载。", error=False)
+        return
     settings = payload["settings"]
     client = legacy.Fucker(proxies=config.get("proxies") or {}, speed=settings["speed"],
         limit=int(settings["limit"]), end_thre=settings["threshold"], tree_view=True, progressbar_view=True)
@@ -107,7 +143,6 @@ def run(payload):
                  title=redact(prefix) or "当前视频")
 
     legacy.progressBar = progress
-    action = payload["action"]
     cookie_sources = [runtime / "cookies.json"]
     if settings["remember"]:
         cookie_sources += [local / "cookies.json", root / "cookies.json"]
@@ -143,14 +178,21 @@ def run(payload):
 
     if action in ("login", "refresh"):
         rows, kinds, failures = [], [], []
-        for kind, method, id_field in (("zhidao", client.getZhidaoList, "secret"), ("hike", client.getHikeList, "courseId")):
+        methods = [("zhidao", client.getZhidaoList, "secret"), ("hike", client.getHikeList, "courseId")]
+        if hasattr(client, "getZhidaoAiList"):
+            methods.append(("ai", client.getZhidaoAiList, "courseId"))
+        for kind, method, id_field in methods:
             try:
                 result = method()
-                rows += [{"id": str(c[id_field]), "name": c.get("courseName") or "未命名课程", "kind": kind} for c in result]
+                if not isinstance(result, list):
+                    raise ValueError("课程接口返回了无法识别的结构，可稍后重试或手动添加课程。")
+                incoming = [{"id": str(c[id_field]), "name": c.get("courseName") or c.get("name") or "未命名课程",
+                             "kind": kind, **({"class_id": str(c["classId"])} if kind == "ai" else {})} for c in result]
+                rows += incoming
                 kinds.append(kind)
             except Exception as error:
                 failures.append(kind)
-                log(("共享课" if kind == "zhidao" else "校内课") + "同步失败：" + redact(error), "warning")
+                log({"zhidao": "共享课", "hike": "校内课", "ai": "AI 课程"}[kind] + "同步失败：" + redact(error), "warning")
         if not kinds:
             emit("auth", logged_in=False)
             raise ValueError("课程同步失败，请检查网络或重新扫码登录。")
@@ -162,6 +204,21 @@ def run(payload):
         emit("result", message=message, error=bool(failures))
         return
 
+    # Count actual generation requests, including the original client's retries.
+    import requests
+    request_count = [0]
+    original_request = requests.sessions.Session.request
+
+    def bounded_request(session, method, url, *args, **kwargs):
+        if "/chat/completions" in str(url) or "/qa/platform/stream" in str(url):
+            if request_count[0] >= ai["max_requests"]:
+                raise AIBudgetExceeded()
+            request_count[0] += 1
+            emit("ai_usage", count=request_count[0])
+        kwargs.setdefault("timeout", 30)
+        return original_request(session, method, url, *args, **kwargs)
+
+    requests.sessions.Session.request = bounded_request
     attention = 0
     for course in payload["courses"]:
         ISSUES.clear()
@@ -169,7 +226,10 @@ def run(payload):
         emit("course", key=key, status="running", message="正在运行 · " + course["name"])
         log("开始课程：" + course["name"])
         try:
-            if course["kind"] == "hike":
+            if course["kind"] == "ai":
+                log("AI 课程模式：" + ("跳过测验。" if ai["no_exam"] else "允许 AI 处理测验，生成请求上限 " + str(ai["max_requests"]) + " 次。"))
+                client.fuckAiCourse(int(course["id"]), int(course["class_id"]), aiConfig=ai, no_exam=ai["no_exam"])
+            elif course["kind"] == "hike":
                 client.fuckHikeCourse(course["id"])
             elif course["kind"] == "zhidao":
                 client.fuckZhidaoCourse(course["id"])
@@ -191,11 +251,16 @@ def run(payload):
 def main():
     console = Console()
     try:
-        payload = json.loads(sys.stdin.readline())
+        payload = json.loads(sys.stdin.read())
         with redirect_stdout(console), redirect_stderr(console):
             run(payload)
             console.flush()
         return 0
+    except AIBudgetExceeded:
+        console.flush()
+        log("已达到本次 AI 请求上限，任务停止。", "warning")
+        emit("result", message="已达到 AI 请求上限，请查看任务记录。", error=True)
+        return 1
     except Exception as error:
         console.flush()
         log(redact(error), "error")

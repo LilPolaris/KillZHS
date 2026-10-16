@@ -5,6 +5,7 @@ cookies.json
 execution.json
 *.js
 !web/app.js
+!web/features.js
 .local/
 output/
 .playwright-cli/
