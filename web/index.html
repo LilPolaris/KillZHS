@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7f4">
+  <meta name="description" content="智慧树本地学习工作台：扫码登录、管理课程、配置任务和查看实时运行日志。">
+  <title>知序 · 学习工作台</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">跳到主要内容</a>
+  <aside class="sidebar" aria-label="主导航">
+    <a class="brand" href="#overview"><span class="brand-mark" data-icon="book"></span><span>知序<span class="brand-en">STUDY SPACE</span></span></a>
+    <div class="workspace-label">我的工作空间</div>
+    <nav>
+      <a href="#overview" class="nav-link active" aria-current="page" data-view="overview"><span data-icon="dashboard"></span>学习概览<span class="nav-dot"></span></a>
+      <a href="#logs" class="nav-link" data-view="logs"><span data-icon="terminal"></span>运行日志<span class="nav-count" id="log-count">0</span></a>
+      <a href="#settings" class="nav-link" data-view="settings"><span data-icon="sliders"></span>偏好设置</a>
+    </nav>
+    <div class="sidebar-note"><span class="tiny-spark">✳</span><p>把时间留给<br>更重要的事。</p><span>一步一步，按自己的节奏。</span></div>
+    <div class="sidebar-bottom">
+      <a href="#guide" class="nav-link" data-view="guide"><span data-icon="help"></span>使用指南<span data-icon="arrow-up-right" class="external-icon"></span></a>
+      <div class="local-status"><span class="status-dot" id="connection-dot"></span><span id="connection-label">正在连接本地服务</span><span class="local-tag">LOCAL</span></div>
+      <div class="sidebar-version">fuckZHS <span>·</span> 本地工作台 v1.0</div>
+    </div>
+  </aside>
+
+  <div class="app-shell">
+    <header class="topbar"><div class="breadcrumb">工作空间<span>/</span><strong id="breadcrumb-title">学习概览</strong></div><div class="topbar-right"><span id="demo-badge" class="badge amber" hidden>演示模式</span><span class="privacy"><span data-icon="shield"></span>仅在本机运行</span><span class="avatar" aria-hidden="true">知</span></div></header>
+    <main id="main" tabindex="-1">
+      <div class="offline-banner" id="offline-banner" role="status" hidden>暂时连接不上本地服务。请确认启动窗口仍然打开，页面会自动重连。</div>
+      <div class="dependency-banner" id="dependency-banner" role="status" hidden></div>
+
+      <section id="view-overview" class="view">
+        <div class="page-heading"><div><div class="eyebrow">A LITTLE MORE ORGANIZED</div><h1>学习，安排得从容一点<span class="heading-dot">。</span></h1><p>课程、任务与进度，都在这里。</p></div><div class="date-label"><span data-icon="calendar"></span><span id="today"></span></div></div>
+
+        <section class="welcome-banner" aria-label="学习提示"><div class="welcome-copy"><span class="pill"><span class="status-dot"></span>你的本地学习空间</span><h2>少一点繁琐，多一点专注。</h2><p>登录账号，选好课程，剩下的交给工作台。</p><button class="text-button" id="guide-button">第一次使用？看看操作指南<span data-icon="arrow-right"></span></button></div><div class="welcome-art" aria-hidden="true"><svg viewBox="0 0 310 190" fill="none"><ellipse cx="177" cy="160" rx="104" ry="13" fill="#bed4c4" opacity=".4"/><circle cx="195" cy="90" r="69" fill="#c9e0cf" opacity=".7"/><circle cx="195" cy="90" r="83" stroke="#c5d9cb" stroke-dasharray="3 7"/><g transform="rotate(-8 167 105)"><rect x="106" y="44" width="128" height="126" rx="12" fill="#557f64"/><rect x="96" y="36" width="128" height="126" rx="12" fill="#fffef5"/><path d="M113 37v123" stroke="#e4e8db"/><path d="M131 64h63M131 76h44" stroke="#ccd5c8" stroke-width="5" stroke-linecap="round"/><rect x="130" y="96" width="12" height="12" rx="3" fill="#dfebde"/><path d="m133 102 3 3 4-5" stroke="#60856a" stroke-width="2" stroke-linecap="round"/><path d="M153 102h40" stroke="#ccd5c8" stroke-width="4" stroke-linecap="round"/><rect x="130" y="121" width="12" height="12" rx="3" fill="#dfebde"/><path d="M153 127h31" stroke="#ccd5c8" stroke-width="4" stroke-linecap="round"/></g><g transform="rotate(16 240 127)"><rect x="235" y="75" width="9" height="74" rx="4" fill="#ddaa60"/><path d="m235 149 4.5 13 4.5-13" fill="#f1d3a6"/><path d="m237.5 157 2 5 2-5" fill="#496953"/></g><rect x="59" y="103" width="62" height="38" rx="10" fill="#fff"/><path d="m75 122 6 6 12-13" stroke="#557f64" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M255 37v12m-6-6h12M76 58v8m-4-4h8" stroke="#78997f" stroke-width="2" stroke-linecap="round"/></svg></div></section>
+
+        <section class="stats-grid" aria-label="工作台统计">
+          <div class="stat-card"><span class="stat-icon sage" data-icon="book"></span><div><span class="stat-label">课程总数</span><div class="stat-number" id="stat-total">0<span>门</span></div></div><span class="stat-caption">我的课程清单</span></div>
+          <div class="stat-card"><span class="stat-icon sand" data-icon="layers"></span><div><span class="stat-label">已选课程</span><div class="stat-number" id="stat-selected">0<span>门</span></div></div><span class="stat-caption">准备开始的课程</span></div>
+          <div class="stat-card"><span class="stat-icon blue" data-icon="check-circle"></span><div><span class="stat-label">本次已运行</span><div class="stat-number" id="stat-done">0<span>门</span></div></div><span class="stat-caption">以平台完成状态为准</span></div>
+          <div class="stat-card"><span class="stat-icon blush" data-icon="clock"></span><div><span class="stat-label">任务运行时间</span><div class="stat-number timer" id="stat-time">00:00<span>时长</span></div></div><span class="stat-caption" id="stat-task-label">尚未开始任务</span></div>
+        </section>
+
+        <div class="workspace-grid">
+          <div class="workspace-main">
+            <section class="panel course-panel" aria-labelledby="courses-title"><div class="panel-heading"><div><h2 id="courses-title">我的课程<span class="count-pill" id="course-count">0</span></h2><p>选择本次想要学习的课程</p></div><div class="heading-actions"><button class="icon-button" id="add-course" aria-label="手动添加课程" title="手动添加课程"><span data-icon="plus"></span></button><button class="button secondary small" id="refresh"><span data-icon="refresh"></span>同步课程</button></div></div>
+              <div class="course-toolbar"><div class="segmented" role="group" aria-label="筛选课程类型"><button class="selected" data-filter="all" aria-pressed="true">全部课程</button><button data-filter="zhidao" aria-pressed="false">共享课</button><button data-filter="hike" aria-pressed="false">校内课</button></div><label class="search-box"><span data-icon="search"></span><input id="search" type="search" placeholder="搜索课程" aria-label="搜索课程"></label></div>
+              <div class="course-table"><div class="table-header"><label class="checkbox-wrap"><input type="checkbox" id="select-all" aria-label="选择当前筛选下的所有课程"></label><span>课程名称</span><span>课程类型</span><span>任务状态</span></div><div id="course-list"></div><div class="empty-state" id="course-empty"><span class="empty-icon" data-icon="book"></span><h3>从第一门课程开始</h3><p>扫码登录后点击「同步课程」，<br>就能在这里选择你的课程。</p><button class="text-button" id="empty-login">登录并同步<span data-icon="arrow-right"></span></button></div></div>
+              <div class="selection-bar"><span>已选择 <strong id="selected-count">0</strong> 门课程<button class="text-muted" id="clear-selection">清空</button></span><button class="button primary" id="start"><span data-icon="play"></span>开始学习</button></div>
+            </section>
+
+            <section class="panel monitor-panel" aria-labelledby="monitor-title"><div class="panel-heading compact"><h2 id="monitor-title"><span class="live-indicator" id="live-indicator"></span>任务动态</h2><a href="#logs" class="subtle-link">全部日志<span data-icon="arrow-up-right"></span></a></div><div class="monitor-status"><div><span class="badge" id="task-status">等待开始</span><p id="task-message" role="status">准备好后，扫码登录并同步课程。</p></div><button class="button danger small" id="stop" hidden><span data-icon="square"></span>停止任务</button></div><div class="progress-section" id="progress-section" hidden><div><span id="progress-title">当前视频</span><strong id="progress-number">0%</strong></div><progress id="video-progress" max="100" value="0" aria-label="当前视频运行进度"></progress></div><div class="mini-logs" id="mini-logs" aria-label="最近的运行日志"></div></section>
+          </div>
+
+          <aside class="workspace-aside" aria-label="登录与运行设置">
+            <section class="panel account-panel"><div class="panel-heading compact"><h2>账号连接</h2><span class="badge" id="auth-badge">未登录</span></div><div id="login-visual" class="login-visual"><span class="login-icon" data-icon="qr"></span><div class="login-orbit"></div></div><img id="qr-image" class="qr-image" alt="知到 App 登录二维码" hidden><h3 id="login-title">连接你的知到账号</h3><p id="login-description">使用知到 App 扫码登录<br>已有登录状态可直接尝试同步</p><button class="button primary full" id="login"><span data-icon="qr"></span><span id="login-button-label">扫码登录</span></button><label class="remember-row"><input type="checkbox" data-setting="remember" checked><span>记住登录状态</span></label><div class="account-footnote"><span data-icon="lock"></span>登录信息仅保存在本机</div></section>
+
+            <section class="panel quick-settings"><div class="panel-heading compact"><h2>运行设置</h2><a href="#settings" class="subtle-link" aria-label="查看全部设置"><span data-icon="sliders"></span></a></div><form id="quick-settings-form"><label class="field-label" for="quick-speed">播放倍速<span class="field-hint">默认跟随平台</span></label><select id="quick-speed" data-setting="speed"><option value="">平台默认</option><option value="1">1.0 ×</option><option value="1.5">1.5 ×</option><option value="2">2.0 ×</option><option value="3">3.0 ×</option><option value="4">4.0 ×</option></select><label class="field-label spaced" for="quick-limit">单门课程时限<span class="field-hint">0 为不限制</span></label><div class="input-suffix"><input id="quick-limit" type="number" min="0" max="1440" step="1" value="0" data-setting="limit"><span>分钟</span></div><button class="button secondary full" type="submit"><span data-icon="check"></span>保存设置</button></form><p class="settings-footnote">设置会用于下一次启动的任务。</p></section>
+          </aside>
+        </div>
+        <footer class="page-footer"><span><span class="status-dot"></span>在自己的节奏里，慢慢向前。</span><span>知序 · 让学习井井有条</span></footer>
+      </section>
+
+      <section id="view-logs" class="view" hidden><div class="page-heading"><div><div class="eyebrow">EVERY STEP, IN SIGHT</div><h1>运行日志<span class="heading-dot">。</span></h1><p>查看当前工作台会话的任务记录。</p></div><button class="button secondary" id="export-logs"><span data-icon="download"></span>导出日志</button></div><section class="panel log-panel"><div class="panel-heading"><h2>会话记录</h2><div class="heading-actions"><label class="sr-only" for="log-filter">日志级别</label><select id="log-filter"><option value="all">全部级别</option><option value="warning">提醒与错误</option><option value="error">仅错误</option></select><button class="button secondary small" id="clear-logs">清空显示</button></div></div><div class="full-logs" id="full-logs" aria-label="运行日志"></div><p class="panel-footnote">最多保留最近 600 条记录；导出前会隐藏已知登录凭据。关闭服务后，本页记录会清空。</p></section></section>
+
+      <section id="view-settings" class="view" hidden><div class="page-heading"><div><div class="eyebrow">MAKE YOURSELF AT HOME</div><h1>按你的习惯来<span class="heading-dot">。</span></h1><p>设置保存在本机，下一次任务启动时生效。</p></div></div><section class="panel settings-panel"><div class="panel-heading"><div><h2>学习偏好</h2><p>原项目的 config.json 保持原样。</p></div><span class="stat-icon sage" data-icon="sliders"></span></div><form id="settings-form"><div class="setting-row"><div><label for="setting-speed">播放倍速</label><p>留空跟随平台，支持 0.1–16 倍。</p></div><div class="input-suffix"><input id="setting-speed" data-setting="speed" type="number" min="0.1" max="16" step="0.1" placeholder="平台默认"><span>×</span></div></div><div class="setting-row"><div><label for="setting-limit">单门课程时限</label><p>达到时限后结束该门课程的本次运行；0 为不限制。</p></div><div class="input-suffix"><input id="setting-limit" data-setting="limit" type="number" min="0" max="1440" step="1" value="0"><span>分钟</span></div></div><div class="setting-row"><div><label for="setting-threshold">完成阈值</label><p>原脚本按此比例判断视频是否可跳过，默认 0.91。</p></div><input id="setting-threshold" data-setting="threshold" type="number" min="0.1" max="2" step="0.01" value="0.91"></div><div class="setting-row"><div><label for="setting-remember">记住登录状态</label><p>供下次启动复用；关闭后登录仅保留到服务退出。</p></div><input id="setting-remember" data-setting="remember" type="checkbox" checked></div><div class="settings-actions"><button type="button" class="button secondary" id="reset-settings">恢复默认</button><button class="button primary" type="submit"><span data-icon="check"></span>保存偏好</button></div></form></section></section>
+
+      <section id="view-guide" class="view" hidden><div class="page-heading"><div><div class="eyebrow">LET’S GET STARTED</div><h1>三步，开始使用<span class="heading-dot">。</span></h1><p>启动窗口保持打开，浏览器就是你的控制台。</p></div></div><div class="guide-grid"><article class="panel guide-card"><span class="step-number">01</span><span class="guide-icon" data-icon="qr"></span><h2>连接账号</h2><p>在学习概览点击「扫码登录」，用知到 App 扫码并确认。若已保存登录状态，也可以先点击「同步课程」。</p></article><article class="panel guide-card"><span class="step-number">02</span><span class="guide-icon" data-icon="layers"></span><h2>挑选课程</h2><p>登录后会同步共享课和校内课。勾选课程，或者用列表右上角的加号，粘贴课程地址手动添加。</p></article><article class="panel guide-card"><span class="step-number">03</span><span class="guide-icon" data-icon="play"></span><h2>开始任务</h2><p>保存倍速和时限后点击「开始学习」。任务动态显示当前视频进度；遇到问题可查看日志，随时停止任务。</p></article></div><section class="panel guide-details"><h2>你可能还想知道</h2><details open><summary>“已运行”和平台课程完成有什么区别？</summary><p>已运行表示脚本已结束这门课程的本次任务。课程可能仍有未完成视频、时限或验证要求，实际完成情况请到平台查看。工作台不会把本地运行进度当成平台完成率。</p></details><details><summary>登录二维码过期、遇到验证码怎么办？</summary><p>原脚本会在二维码过期后申请新的二维码，页面会自动更新。若登录长时间无响应，可先停止，再重新扫码。遇到平台验证，请先在官方页面完成，再回到这里同步。</p></details><details><summary>设置、账号和课程保存在哪里？</summary><p>工作台自己的设置与课程清单保存在项目的 .local/webui 目录。勾选记住登录状态时，登录凭据也保存在该目录；关闭服务会清理临时会话。原项目的配置、Cookie 和课程清单不被覆盖。</p></details><details><summary>支持 AI 课程和答题模型设置吗？</summary><p>本界面连接普通共享课与校内课。AI 课程及其模型配置仍使用原命令行入口，本界面不会启动模型 API 调用。</p></details><details><summary>关闭网页后，任务会停止吗？</summary><p>关闭浏览器标签页不会停止任务，重新打开同一个本地地址即可查看。点击「停止任务」，或在启动窗口按 Ctrl+C，会停止当前运行并关闭相关进程。</p></details></section></section>
+    </main>
+  </div>
+
+  <dialog id="course-dialog" aria-labelledby="dialog-title"><form id="add-form"><div class="dialog-heading"><h2 id="dialog-title">添加一门课程</h2><button type="button" class="icon-button" id="close-dialog" aria-label="关闭"><span data-icon="x"></span></button></div><p>粘贴课程网址，自动提取课程 ID。</p><label class="field-label" for="course-url">课程地址或 ID</label><input id="course-url" required maxlength="2000" placeholder="https://…?courseId=…" autocomplete="off"><label class="field-label spaced" for="course-name">课程名称 <span class="field-hint">选填</span></label><input id="course-name" maxlength="160" placeholder="方便自己辨认的名字"><label class="field-label spaced" for="course-kind">课程类型</label><select id="course-kind"><option value="auto">自动识别</option><option value="zhidao">共享课</option><option value="hike">校内课</option></select><p class="form-error" id="add-error" role="alert"></p><button class="button primary full" type="submit"><span data-icon="plus"></span>添加到课程清单</button></form></dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+</body>
+</html>

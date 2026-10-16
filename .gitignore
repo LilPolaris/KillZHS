@@ -4,6 +4,10 @@ config.json
 cookies.json
 execution.json
 *.js
+!web/app.js
+.local/
+output/
+.playwright-cli/
 .DS_Store
 
 # Byte-compiled / optimized / DLL files
