@@ -2062,6 +2062,12 @@ progress::-moz-progress-bar {
   gap:12px;
 }
 
+.assessment-row .assessment-grade {
+  color:var(--forest, #315943);
+  font-size:14px;
+  font-weight:600;
+}
+
 .official-panel {
   overflow:hidden;
 }

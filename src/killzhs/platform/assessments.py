@@ -7,6 +7,7 @@ until the platform list confirms the outcome.
 
 import hashlib
 import json
+import math
 import re
 import time
 from datetime import datetime
@@ -158,6 +159,21 @@ def result_code(value):
     return None
 
 
+def score_number(value):
+    """Keep published finite scores, including zero and numeric JSON strings."""
+    if type(value) not in (int, float, str):
+        return None
+    if isinstance(value, str) and (len(value) > 32 or not re.fullmatch(r"[0-9]+(?:\.[0-9]+)?", value.strip())):
+        return None
+    try:
+        number = float(value)
+    except (ValueError, OverflowError):
+        return None
+    if not math.isfinite(number) or number < 0:
+        return None
+    return int(number) if number.is_integer() else number
+
+
 class SharedAssessments:
     def __init__(self, client, control, ai, directory, *, budget, emit, log):
         self.client, self.control, self.ai = client, control, ai
@@ -249,6 +265,18 @@ class SharedAssessments:
         if kind == "chapter":
             parts.append(ident(row.get("meetCourseType", 0)))
         result["url"] = EXAM_PAGE + "#/webExamList/" + route + "/" + "/".join(parts)
+        total = score_number(row.get("totalScore"))
+        if total is not None and total > 0:
+            result["total_score"] = total
+        # The official list exposes a score only in the graded state. Other
+        # states often contain a placeholder 0, which is not a published grade.
+        if result["state"] == 4:
+            score = score_number(row.get("score"))
+            percentage = score_number(row.get("oneHundredPont"))
+            if score is not None:
+                result["score"] = score
+            if percentage is not None and percentage <= 100:
+                result["score_percent"] = percentage
         return result
 
     def scan(self):

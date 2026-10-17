@@ -59,7 +59,7 @@ State is the existing public JSON object, not a new envelope. See the executable
   `verification_probe.awaiting_confirmation` selects the experiment flow.
   Probe IDs, `confirmation_sent`, and `awaiting_confirmation` are authoritative.
 - Assessments: `assessments` rows `{course_key, kind, id, exam_id, name, state,
-  url, end?}` and `assessment_results` keyed by assessment key. Only states
+  url, end?, score?, total_score?, score_percent?}` and `assessment_results` keyed by assessment key. Published finite numeric scores (including zero) occur only in list state 4; state 3 means awaiting grading. Missing scores are not zero. Refresh grades uses `assessment_scan` and never opens papers or requests a model. Only states
   1, 2, 5 are selectable; results with `state: "submitted"` disable the row.
 
 Course keys are `kind:id`, or `ai:id:class_id`. Assessment keys are

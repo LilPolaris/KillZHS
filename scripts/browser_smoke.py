@@ -116,6 +116,7 @@ class Fixture:
         self.state = demo_state()
         self.posts = []
         self.queries = []
+        self.grade_rows = None
         self.lock = threading.RLock()
 
     def public_state(self, query):
@@ -219,6 +220,8 @@ class Fixture:
                     }
                     for index, kind, title in ((1, "chapter", "第一章测验"), (2, "exam", "期末考试"))
                 ]
+                if self.grade_rows is not None:
+                    state["assessments"] = copy.deepcopy(self.grade_rows)
                 self.archive(name)
             elif name == "assessment_run":
                 state["assessment_results"] = {
@@ -465,6 +468,41 @@ def smoke(url, output, fixture=None):
             page.locator("[data-assessment]").first.check()
             submit(page, "assessment_run", lambda: page.locator("#assessment-run").click())
             expect(page.locator("#assessment-list")).to_contain_text("演示交卷成功", timeout=10000)
+            if fixture:
+                original_rows = copy.deepcopy(fixture.state["assessments"])
+                fixture.grade_rows = [
+                    {**original_rows[0], "state": 4, "score": 0, "total_score": 100},
+                    {**original_rows[1], "state": 3, "score": 0},
+                    {**original_rows[0], "id": "grade3", "name": "已提交，尚未公布分数", "state": 4},
+                    {**original_rows[0], "id": "grade4", "name": "小数成绩", "state": 4,
+                     "score": 87.5, "total_score": 100},
+                    {**original_rows[1], "id": "grade5", "name": "百分制成绩", "state": 4,
+                     "score_percent": 88.125},
+                ]
+                # A fresh platform grade supersedes an older local error.
+                fixture.state["assessment_results"][assessment_key(original_rows[0])] = {
+                    "state": "attention", "message": "过期的本地错误"}
+                navigate(page, "ai")
+                page.locator("#ai-enabled").uncheck()
+                submit(page, "ai_settings", lambda: page.locator('#ai-form button[type="submit"]').click())
+                navigate(page, "assessments")
+                before_posts = len(fixture.posts)
+                submit(page, "assessment_scan", lambda: page.locator("#assessment-refresh-grades").click())
+                expect(page.locator("[data-assessment-grade]").first).to_have_text("成绩：0 / 100 分")
+                expect(page.locator("[data-assessment-grade]").nth(1)).to_have_text("成绩：待批阅")
+                expect(page.locator("[data-assessment-grade]").nth(2)).to_have_text("成绩：成绩未公布")
+                expect(page.locator("[data-assessment-grade]").nth(3)).to_have_text("成绩：87.5 / 100 分")
+                expect(page.locator("[data-assessment-grade]").nth(4)).to_have_text("成绩：百分制 88.125 分")
+                expect(page.locator("#assessment-list")).not_to_contain_text("过期的本地错误")
+                expect(page.locator("[data-assessment]").first).to_be_disabled()
+                expect(page.locator("[data-assessment]").nth(1)).to_be_disabled()
+                assert fixture.posts[before_posts:] == [("assessment_scan", {"courses": [original_rows[0]["course_key"]]})]
+                assert fixture.state["ai"]["enabled"] is False
+                page.screenshot(path=str(output / "grades-desktop.png"), full_page=True)
+                page.set_viewport_size({"width": 390, "height": 844})
+                assert page.evaluate("document.documentElement.scrollWidth <= innerWidth"), "Grade view overflows mobile"
+                page.screenshot(path=str(output / "grades-mobile.png"), full_page=True)
+                page.set_viewport_size({"width": 1440, "height": 1000})
             page.locator("[data-open-assessment]").first.click()
             expect(page.locator("#official-frame")).to_be_visible()
             assert page.locator("#official-frame").get_attribute("src") is None

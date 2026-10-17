@@ -2,6 +2,7 @@ import { $, escape, keyOf } from "./dom.js";
 import { state, connected, pending } from "./store.js";
 import { action } from "./actions.js";
 import { officialPage, closeOfficial } from "./official.js";
+import { gradeLabel, assessmentStatus } from "./assessment-grades.js";
 let assessmentSignature = "";
 let assessmentToken = null;
 const assessmentSelection = new Set();
@@ -11,6 +12,7 @@ $("assessment-course").addEventListener("change", () => {
   assessmentSelection.clear(); assessmentSignature = ""; renderAssessments();
 });
 $("assessment-scan").addEventListener("click", () => action("assessment_scan", { courses: [$("assessment-course").value] }));
+$("assessment-refresh-grades").addEventListener("click", () => action("assessment_scan", { courses: [$("assessment-course").value] }));
 $("assessment-run").addEventListener("click", () => action("assessment_run", { courses: [$("assessment-course").value], assessments: [...assessmentSelection] }));
 $("assessment-list").addEventListener("change", (event) => {
   const input = event.target.closest("[data-assessment]");
@@ -29,6 +31,7 @@ function renderAssessmentButtons() {
   const busy = !connected || pending || state?.status === "running";
   $("assessment-course").disabled = busy;
   $("assessment-scan").disabled = busy || !$("assessment-course").value;
+  $("assessment-refresh-grades").disabled = busy || !$("assessment-course").value;
   $("assessment-run").disabled = busy || !assessmentSelection.size || !state?.ai.enabled;
   $("assessment-count").textContent = `已选择 ${assessmentSelection.size} 份`;
   $("assessment-list").querySelectorAll("[data-assessment]").forEach((input) => { input.disabled = busy || input.dataset.unavailable === "true"; });
@@ -58,7 +61,7 @@ export function renderAssessments() {
       const key = assessmentKey(row);
       const result = results[key];
       const disabled = !available.has(key);
-      return `<article class="assessment-row"><label><input type="checkbox" data-assessment data-unavailable="${disabled}" value="${escape(key)}" ${assessmentSelection.has(key) ? "checked" : ""}><span><strong>${escape(row.name)}</strong><small>${row.kind === "chapter" ? "章节测验" : "在线考试"}${row.end ? " · 截止 " + escape(row.end) : ""}</small></span></label><div class="assessment-row-actions"><span class="badge ${result?.state === "submitted" ? "green" : ""}">${escape(result?.message || (disabled ? "已提交 / 不可作答" : "待作答"))}</span><button class="text-button" type="button" data-open-assessment="${escape(key)}">官方入口 ↗</button></div></article>`;
+      return `<article class="assessment-row"><label><input type="checkbox" data-assessment data-unavailable="${disabled}" value="${escape(key)}" ${assessmentSelection.has(key) ? "checked" : ""}><span><strong>${escape(row.name)}</strong><small>${row.kind === "chapter" ? "章节测验" : "在线考试"}${row.end ? " · 截止 " + escape(row.end) : ""}</small><small class="assessment-grade" data-assessment-grade>成绩：${escape(gradeLabel(row))}</small></span></label><div class="assessment-row-actions"><span class="badge ${row.state === 4 || result?.state === "submitted" ? "green" : ""}">${escape(assessmentStatus(row, result))}</span><button class="text-button" type="button" data-open-assessment="${escape(key)}">官方入口 ↗</button></div></article>`;
     }).join("") || '<p class="panel-footnote">尚无测验清单。先同步；若课程没有开放测验，清单会保持为空。</p>';
   }
   if ((state.action || "").startsWith("assessment_")) $("assessment-status").textContent = state.message;
