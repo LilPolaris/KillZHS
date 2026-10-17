@@ -258,6 +258,8 @@ def run(payload):
                 log(row["name"] + " · " + result["message"])
             emit("result", message="所选试卷已由平台确认交卷，成绩以平台批阅为准。", error=False)
         except AssessmentError as error:
+            if error.reason == "auth":
+                emit("auth", logged_in=False)
             if active_assessment:
                 emit("assessment_result", key=active_assessment, state="attention", message=str(error))
             emit("result", message=str(error), error=True, reason=error.reason)

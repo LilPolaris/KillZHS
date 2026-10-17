@@ -28,7 +28,10 @@ def main():
     dependency_closure(requirement_lines(ROOT / "requirements-build-lock.txt"))
     build = ROOT / ".local" / "build"
     release = ROOT / "output" / "release"
-    distribution_dir = release / VERSION
+    # A user may already be testing the previous build of this version. Never
+    # let PyInstaller --noconfirm recursively remove an existing distribution.
+    release.mkdir(parents=True, exist_ok=True)
+    distribution_dir = Path(tempfile.mkdtemp(prefix=VERSION + "-", dir=release))
     tokenizer = build / "tokenizer"
     tokenizer.mkdir(parents=True, exist_ok=True)
     release.mkdir(parents=True, exist_ok=True)
@@ -76,6 +79,8 @@ def main():
                 output.write(path, path.relative_to(distribution_dir))
     checksum = hashlib.file_digest(archive.open("rb"), "sha256").hexdigest()
     (release / "SHA256SUMS.txt").write_text(checksum + "  " + archive.name + "\n", encoding="utf-8")
+    (release / "latest-build.json").write_text(json.dumps({"version": VERSION,
+        "bundle": str(bundle), "archive": str(archive), "sha256": checksum}, indent=2), encoding="utf-8")
     print(f"Release ready: {archive.name} ({archive.stat().st_size / 1024 / 1024:.1f} MB)")
 
 

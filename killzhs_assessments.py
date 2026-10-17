@@ -13,7 +13,7 @@ import json
 from pathlib import Path
 import re
 import time
-from urllib.parse import urlencode
+from urllib.parse import urlsplit
 
 from killzhs_config import InputError
 
@@ -139,6 +139,7 @@ class SharedAssessments:
         self.session = None
         self.exam_deadline = None
         self.provider = None
+        self.authenticated = set()
         self.remaining_requests = lambda: ai["max_requests"]
 
     def connect(self, course):
@@ -153,17 +154,25 @@ class SharedAssessments:
         self.session.proxies.update(self.client.session.proxies)
         self.session.headers.update({"User-Agent": self.client.session.headers.get("User-Agent", "KillZHS"),
                                      "Origin": "https://onlineexamh5new.zhihuishu.com", "Referer": EXAM_PAGE})
-        for host, prefix in HOSTS.values():
-            self.control.check()
-            response = self.session.get(f"https://{host}.zhihuishu.com/{prefix}/gateway/f/v1/gologin/login",
-                                        params={"fromurl": EXAM_PAGE}, timeout=30)
-            response.raise_for_status()
-            if "passport" in response.url or "login.zhihuishu" in response.url:
-                raise AssessmentError("考试系统登录状态失效，请先到官方页面登录同一账号。", "auth")
+        self.authenticate("chapter")
         school = self.query("exam/getLoginSchoolInfo", {})
         if not isinstance(school, dict):
             raise AssessmentError("无法读取考试所属学校，请先到官网检查登录状态。")
         self.school = ident(school.get("schoolId"))
+
+    def authenticate(self, kind):
+        self.control.check()
+        if kind in self.authenticated:
+            return
+        host, prefix = HOSTS[kind]
+        endpoint = "getStudentHomework" if kind == "chapter" else "getStudentFinalExam"
+        service = f"https://{host}.zhihuishu.com/{prefix}/gateway/t/v1/student/{endpoint}"
+        response = self.session.get("https://passport.zhihuishu.com/cas/login",
+                                    params={"service": service}, timeout=30)
+        response.raise_for_status()
+        if urlsplit(response.url).hostname != host + ".zhihuishu.com":
+            raise AssessmentError("考试系统登录凭据已失效。请回到学习概览重新扫码登录工作台，再同步测验；只登录浏览器不会更新脚本凭据。", "auth")
+        self.authenticated.add(kind)
 
     def query(self, path, data, *, kind="chapter"):
         from zd_utils import Cipher, EXAM_KEY
@@ -235,6 +244,7 @@ class SharedAssessments:
                     else:
                         raise AssessmentError("章节测验过多，请在官网查看剩余内容。")
                 else:
+                    self.authenticate("exam")
                     data = self.query("student/getStudentFinalExam", {"recruitId": self.recruit,
                         "courseId": self.course_id, "flag": 1}, kind=kind)
                     if data == {}:
@@ -244,7 +254,7 @@ class SharedAssessments:
                     for entry in data:
                         rows.append(self.normalize(entry, kind))
             except AssessmentError as error:
-                if error.reason:
+                if error.reason and not (kind == "exam" and error.reason == "auth"):
                     raise
                 incomplete.append(kind)
                 self.log(("章节测验" if kind == "chapter" else "在线考试") + "同步不完整：" + str(error), "warning")
