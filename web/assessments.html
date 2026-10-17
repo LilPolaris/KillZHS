@@ -1,0 +1,20 @@
+      <section id="view-assessments" class="view" hidden>
+        <div class="page-heading"><div><div class="eyebrow">ONE PAPER AT A TIME</div><h1>测验与考试<span class="heading-dot">。</span></h1><p>同步共享课的章节测验与在线考试，选择后自动答题并交卷。</p></div><span class="badge amber">试验功能</span></div>
+        <section class="panel">
+          <div class="panel-heading"><div><h2>选择课程</h2><p>同步列表不会进入试卷；开始答题可能消耗次数并启动考试计时。</p></div><a class="text-button" href="#ai">配置答题模型 →</a></div>
+          <div class="assessment-toolbar"><label for="assessment-course">共享课</label><select id="assessment-course"></select><button class="button secondary" id="assessment-scan" type="button">同步测验与考试</button></div>
+          <p class="panel-footnote">自动答题支持纯文字单选、多选、判断题。图片、附件、特殊字形及其他题型需到官网处理。模型可能答错，成绩以平台批阅为准。</p>
+          <div class="assessment-list" id="assessment-list"><p class="panel-footnote">选择课程后同步清单。</p></div>
+          <div class="settings-actions"><span id="assessment-count">已选择 0 份</span><button class="button primary" id="assessment-run" type="button">自动答题并交卷</button></div>
+          <p class="panel-footnote" id="assessment-status" role="status">答题沿用已保存的 AI 配置和单次请求上限；填写、复核或交卷失败时停止，保留任务日志。</p>
+        </section>
+      </section>
+      <section id="view-official" class="view" hidden>
+        <div class="page-heading"><div><div class="eyebrow">THE OFFICIAL PAGE</div><h1>官网与验证<span class="heading-dot">。</span></h1><p>在下方使用知到官方页面。验证码仍由你操作，工作台不会自动判断验证成功。</p></div></div>
+        <section class="panel official-panel">
+          <div class="panel-heading"><div><h2 id="official-title">打开课程或验证入口</h2><p id="official-description">待验证时点击顶部“在工作台打开验证”，或从测验清单选择官方入口。</p></div><button class="button secondary small" id="official-close" type="button" hidden>关闭官方页面</button></div>
+          <p class="panel-footnote">内嵌入口为试验功能。官网可能限制嵌入，浏览器也可能阻止登录 Cookie。若空白、循环登录或验证无响应，请使用新窗口；登录同一账号，验证后暂停官方播放器。</p>
+          <div class="official-actions"><a class="button secondary" id="official-external" target="_blank" rel="noopener noreferrer" hidden>在新窗口打开官网 ↗</a><button class="button primary" id="official-return" type="button">返回工作台处理结果</button></div>
+          <iframe id="official-frame" title="知到官方页面" hidden referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads"></iframe>
+        </section>
+      </section>

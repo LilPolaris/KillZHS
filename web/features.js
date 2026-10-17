@@ -116,7 +116,7 @@ function renderFeatures() {
     $("ppt-delete").checked = ai.ppt_processing.moonShot.delete_after_convert;
     $("ppt-key-state").textContent = ai.ppt_processing.moonShot.has_api_key ? "已保存，留空保留。" : "尚未保存文件处理密钥。";
   }
-  const activeLimit = state.status === "running" && state.action === "start" ? (state.active_ai_max_requests ?? state.ai.max_requests) : state.ai.max_requests;
+  const activeLimit = state.status === "running" && ["start", "assessment_run"].includes(state.action) ? (state.active_ai_max_requests ?? state.ai.max_requests) : state.ai.max_requests;
   $("ai-usage").textContent = `本次生成请求 ${state.ai_requests} / ${activeLimit} 次`;
   $("ai-run-note").hidden = state.status !== "running";
   const planSig = JSON.stringify([state.plan, state.courses.map((c) => [keyOf(c), c.name])]);
@@ -148,7 +148,7 @@ function renderHistory() {
   const signature = JSON.stringify(state.history);
   if (historySignature === signature) return;
   historySignature = signature;
-  const labels = { start: "学习任务", login: "扫码登录", refresh: "同步课程", test_ai: "模型列表检查", diagnose: "环境检查" };
+  const labels = { start: "学习任务", login: "扫码登录", refresh: "同步课程", test_ai: "模型列表检查", diagnose: "环境检查", assessment_scan: "同步测验与考试", assessment_run: "自动答题并交卷" };
   const statuses = { done: "已结束", error: "需要查看", stopped: "已停止", limited: "达到时长", skipped: "已跳过", interrupted: "意外中断" };
   $("task-history").innerHTML = state.history.map((row) => {
     const duration = Math.max(0, Math.round((row.ended_at - row.started_at) / 60));

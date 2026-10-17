@@ -140,6 +140,8 @@ def run(payload):
                  phase="waiting" if waiting else "video", remaining=max(0, round(total - iteration)) if waiting else None)
 
     legacy.progressBar = progress
+    if "killzhs_ai_exam" in sys.modules:
+        sys.modules["killzhs_ai_exam"].progressBar = progress
     cookie_sources = [runtime / "cookies.json"]
     if settings["remember"]:
         cookie_sources += [local / "cookies.json", root / "cookies.json"]
@@ -226,6 +228,43 @@ def run(payload):
         return original_request(session, method, url, *args, **kwargs)
 
     requests.sessions.Session.request = bounded_request
+    if action in ("assessment_scan", "assessment_run"):
+        from killzhs_assessments import AssessmentError, SharedAssessments, item_key
+        course = payload["courses"][0]
+        emit("assessment_course", key=course_key(course))
+        service = SharedAssessments(client, control, ai, local, emit=emit, log=log)
+        service.remaining_requests = lambda: ai["max_requests"] - request_count[0]
+        active_assessment = None
+        try:
+            service.connect(course)
+            items, incomplete = service.scan()
+            emit("assessments", course_key=course_key(course), items=items)
+            if action == "assessment_scan":
+                emit("result", message=f"已同步 {len(items)} 份测验与试卷。" + ("部分列表未能读取，请查看日志。" if incomplete else ""), error=bool(incomplete))
+                return
+            current = {item_key(row): row for row in items}
+            for requested in payload["assessments"]:
+                key = item_key(requested)
+                active_assessment = key
+                row = current.get(key)
+                if row is None or row["state"] not in (1, 2, 5):
+                    raise AssessmentError("试卷状态已变化或已提交，请重新同步，不会继续自动答题。")
+                log("开始自动答题并交卷：" + row["name"])
+                emit("assessment_result", key=key, state="running", message="正在读取试卷并生成答案。")
+                result = service.run(row)
+                emit("assessment_result", **result)
+                row["state"] = 4
+                emit("assessments", course_key=course_key(course), items=items)
+                log(row["name"] + " · " + result["message"])
+            emit("result", message="所选试卷已由平台确认交卷，成绩以平台批阅为准。", error=False)
+        except AssessmentError as error:
+            if active_assessment:
+                emit("assessment_result", key=active_assessment, state="attention", message=str(error))
+            emit("result", message=str(error), error=True, reason=error.reason)
+        finally:
+            if service.session:
+                service.session.close()
+        return
     client.diagnostic_secrets = SECRETS
     client.batch_started_monotonic = time.monotonic() - max(0, time.time() - payload.get("started_at", time.time()))
 

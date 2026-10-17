@@ -1,10 +1,10 @@
       <section id="view-ai" class="view" hidden>
-        <div class="page-heading"><div><div class="eyebrow">YOUR MODEL, YOUR CHOICE</div><h1>AI 配置<span class="heading-dot">。</span></h1><p>用于 AI 课程。保存配置不会发送模型请求，密钥仅保存在本机。</p></div><span class="badge green" id="ai-usage">本次生成请求 0 次</span></div>
+        <div class="page-heading"><div><div class="eyebrow">YOUR MODEL, YOUR CHOICE</div><h1>AI 配置<span class="heading-dot">。</span></h1><p>用于 AI 课程和“测验与考试”自动答题。保存配置不会发送模型请求。</p></div><span class="badge green" id="ai-usage">本次生成请求 0 次</span></div>
         <section class="panel settings-panel"><div class="panel-heading"><div><h2>答题与模型服务</h2><p>默认跳过测验，需要时再开启 AI 答题。</p></div><span class="stat-icon sage" data-icon="layers"></span></div>
           <p class="panel-footnote" id="ai-run-note" hidden>当前任务继续使用启动时的 AI 设置。这里保存的配置将在下一次任务生效，无需停止当前任务。</p>
           <form id="ai-form">
             <div class="setting-row"><div><label for="ai-enabled">启用 AI</label><p>使用平台 AI，或填写兼容 Chat Completions 的服务。</p></div><input id="ai-enabled" type="checkbox"></div>
-            <div class="setting-row"><div><label for="ai-no-exam">跳过测验</label><p>开启时只处理课程资源；关闭后才允许 AI 处理测验。</p></div><input id="ai-no-exam" type="checkbox" checked></div>
+            <div class="setting-row"><div><label for="ai-no-exam">学习任务跳过 AI 课程测验</label><p>仅控制 AI 课程的学习任务。“测验与考试”页通过独立按钮开始答题和交卷。</p></div><input id="ai-no-exam" type="checkbox" checked></div>
             <div class="setting-row"><div><label for="ai-source">模型来源</label><p>平台 AI 使用当前知到登录会话。</p></div><select id="ai-source"><option value="platform">平台 AI</option><option value="custom">自定义服务</option></select></div>
             <div id="custom-ai-fields">
               <div class="setting-row"><div><label for="ai-base">API 地址</label><p>例如 https://你的服务地址/v1，末尾不用加 chat/completions。</p></div><input id="ai-base" type="url" value="https://api.openai.com/v1" required maxlength="500"></div>

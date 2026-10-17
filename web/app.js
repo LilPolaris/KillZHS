@@ -60,7 +60,7 @@ function toast(message, error = false) {
   toastTimeout = setTimeout(() => { $("toast").hidden = true; }, error ? 6000 : 3200);
 }
 
-const viewTitles = { overview: "学习概览", logs: "运行日志", settings: "偏好设置", guide: "使用指南", ai: "AI 配置", plan: "定时计划", notifications: "消息通知" };
+const viewTitles = { overview: "学习概览", logs: "运行日志", settings: "偏好设置", guide: "使用指南", ai: "AI 配置", plan: "定时计划", notifications: "消息通知", assessments: "测验与考试", official: "官网与验证" };
 function route() {
   const view = Object.hasOwn(viewTitles, location.hash.slice(1)) ? location.hash.slice(1) : "overview";
   document.querySelectorAll(".view").forEach((element) => { element.hidden = element.id !== `view-${view}`; });
@@ -211,6 +211,11 @@ $("confirm-verification").addEventListener("click", () => {
     "确认已发送，正在尝试原地恢复，不会重新启动任务。");
 });
 $("restart-after-verification").addEventListener("click", () => {
+  if (state?.verification?.action?.startsWith("assessment_")) {
+    location.hash = "assessments";
+    toast("请先重新同步测验清单，核对状态后再选择答题。");
+    return;
+  }
   const known = new Set((state?.courses || []).map(keyOf));
   const keys = (state?.verification?.course_keys || []).filter((key) => known.has(key));
   if (!keys.length) { toast("课程清单已变化，请先同步并重新选择课程。", true); return; }
@@ -233,6 +238,7 @@ function renderVerification() {
     if (!selected.size) selected = new Set(verification.course_keys);
   }
   const disabled = !connected || pending || Boolean(state.stop_requested) || (state.status === "running" && !waiting);
+  $("embed-verification").disabled = disabled;
   const known = new Set(state.courses.map(keyOf));
   const canRestart = verification.course_keys.some((key) => known.has(key));
   $("verification-course").textContent = verification.course_name ? "当前课程：" + verification.course_name : "本次任务已停止，请先在官方页面处理验证。";
@@ -240,6 +246,7 @@ function renderVerification() {
   $("open-verification").setAttribute("aria-disabled", String(disabled));
   $("open-verification").textContent = verification.direct ? "打开当前课程验证 ↗" : "打开知到官方页面 ↗";
   $("restart-after-verification").disabled = disabled || state.status === "running" || !canRestart || !(state.logged_in || state.saved_session);
+  $("restart-after-verification").textContent = verification.action?.startsWith("assessment_") ? "返回测验清单核对" : "验证后重新开始";
   $("restart-after-verification").title = canRestart ? "确认已在官方页面完成验证后，按当前设置重新开始本次未完成的课程。" : "课程清单已变化，请先同步并重新选择。";
   $("verification-title").textContent = waiting ? "等待验证（实验）" : "需要完成平台验证";
   $("verification-note").textContent = waiting
@@ -449,13 +456,16 @@ function render() {
   renderVerification();
   if (state.verification && (!busy || state.verification_probe?.awaiting_confirmation)) {
     $("login-title").textContent = "账号需要完成验证";
-    $("login-description").textContent = "请使用页面上方的验证入口，完成后返回工作台重新开始。";
+    $("login-description").textContent = state.verification_probe?.awaiting_confirmation
+      ? "请在官方页面完成验证，再点击“我已完成网页验证”。"
+      : "请使用页面上方的验证入口，完成后返回工作台重新开始。";
   }
   renderSettings();
   renderCourses();
   renderLogs();
   renderTimer();
   if (typeof renderFeatures === "function") renderFeatures();
+  if (typeof renderAssessments === "function") renderAssessments();
 }
 
 let fetching = null;

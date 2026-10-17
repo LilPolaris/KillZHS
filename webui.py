@@ -27,6 +27,7 @@ from killzhs_notifications import Notifier, validate_notifications, public_notif
 from killzhs_privacy import collect_secrets, redact
 from killzhs_tasklogs import TaskLogs
 from killzhs_runtime import STOP_GRACE_SECONDS, TaskControl, TaskStopped
+from killzhs_assessments import validate_selection
 
 ROOT = Path(__file__).resolve().parent
 ASSETS = ROOT / "web"
@@ -175,6 +176,8 @@ class Controller:
             self.plan = copy.deepcopy(PLAN_DEFAULTS)
         self.ai_requests = 0
         self.active_ai_max_requests = None
+        self.assessments = []
+        self.assessment_results = {}
         self.log("本地工作台已就绪。" + (" 当前为演示模式。" if demo else ""))
         if not demo:
             self.recover_history()
@@ -191,12 +194,13 @@ class Controller:
                if direct else "https://www.zhihuishu.com/")
         return {"course_key": course_key(course) if course else None,
                 "course_name": course["name"] if course else None, "url": url, "direct": direct,
-                "course_keys": keys, "task_id": task_id}
+                "course_keys": keys, "task_id": task_id,
+                "action": self.action if self.action in ("assessment_scan", "assessment_run") else "start"}
 
     def restore_verification(self):
         # Older releases saved only a message and names. Restore a direct link
         # only when a name uniquely identifies a course; never reuse a stored URL.
-        row = next((row for row in reversed(self.history) if row.get("action") == "start"), None)
+        row = next((row for row in reversed(self.history) if row.get("action") in ("start", "assessment_scan", "assessment_run")), None)
         if not row:
             return
         saved = row.get("verification")
@@ -204,6 +208,7 @@ class Controller:
             keys = saved.get("course_keys", [])
             self.verification = self.verification_context(keys if isinstance(keys, list) else [],
                                                         saved.get("course_key"), row.get("id"))
+            self.verification["action"] = row["action"]
         elif row.get("status") == "error" and "需要手动验证" in str(row.get("message", "")):
             names = row.get("courses", [])
             if not isinstance(names, list):
@@ -247,6 +252,7 @@ class Controller:
                 "verification_probe": self.verification_probe, "verify_probe_enabled": self.verify_probe_enabled,
                 "verify_probe_available": os.environ.get("KILLZHS_VERIFY_PROBE") == "1",
                 "notifications": public_notifications(self.notifications),
+                "assessments": self.assessments, "assessment_results": self.assessment_results,
                 "app": "KillZHS"}
             if history_revision != self.history_revision:
                 result["history"] = list(reversed(self.history))
@@ -337,12 +343,12 @@ class Controller:
                 self.courses.append(course)
                 self.persist_courses()
                 return
-            if action not in ("login", "refresh", "start", "test_ai", "diagnose"):
+            if action not in ("login", "refresh", "start", "test_ai", "diagnose", "assessment_scan", "assessment_run"):
                 raise InputError("不支持的操作。")
             if self.dependencies and not self.demo:
                 raise InputError("当前 Python 环境缺少依赖：" + "、".join(self.dependencies) + "。请用项目虚拟环境启动。")
             selected = data.get("courses", [])
-            if action == "start":
+            if action in ("start", "assessment_scan", "assessment_run"):
                 if scheduled and self.verification:
                     raise InputError("上次任务仍需手动验证，请在工作台打开课程验证后重新开始。")
                 if not self.logged_in and not self.has_session() and not self.demo:
@@ -353,6 +359,14 @@ class Controller:
                 if any(not isinstance(key, str) or key not in known for key in selected):
                     raise InputError("课程清单已变化，请重新选择。")
                 selected = [copy.deepcopy(known[key]) for key in dict.fromkeys(selected)]
+                if action.startswith("assessment_") and (len(selected) != 1 or selected[0]["kind"] != "zhidao"):
+                    raise InputError("章节测验与考试目前请选择一门共享课。")
+                assessment_items = validate_selection(self.assessments, data.get("assessments"), course_key(selected[0])) if action == "assessment_run" else []
+                if action == "assessment_run":
+                    if not self.ai["enabled"]:
+                        raise InputError("请先在 AI 配置中启用 AI。")
+                    if not self.ai["use_zhidao_ai"] and not (self.ai["openai"]["api_key"] and self.ai["openai"]["model_name"]):
+                        raise InputError("请先保存模型密钥和准确的模型名称。")
                 if any(c["kind"] == "ai" for c in selected) and not self.ai["no_exam"]:
                     if not self.ai["enabled"]:
                         raise InputError("AI 答题尚未启用。请开启 AI，或选择跳过测验。")
@@ -364,7 +378,9 @@ class Controller:
             self.job_id += 1
             self.job_courses, self.origin = copy.deepcopy(selected), "schedule" if scheduled else "manual"
             self.ai_requests = 0
-            self.active_ai_max_requests = self.ai["max_requests"] if action == "start" else None
+            self.active_ai_max_requests = self.ai["max_requests"] if action in ("start", "assessment_run") else None
+            if action == "assessment_run":
+                self.assessment_results = {}
             self.result_status, self.ended_at = None, None
             self.result_reason = None
             self.verify_probe_enabled = action == "start" and os.environ.get("KILLZHS_VERIFY_PROBE") == "1"
@@ -385,17 +401,18 @@ class Controller:
                 self.archive_failed = True
                 self.log("无法保存任务日志索引，本次仅保留会话日志。", "warning", archive=False)
             self.log("任务开始：" + action)
-            self.message = {"login": "正在连接登录服务…", "refresh": "正在同步课程…", "start": "正在准备学习任务…", "test_ai": "正在检查模型服务…", "diagnose": "正在检查运行环境…"}[action]
+            self.message = {"login": "正在连接登录服务…", "refresh": "正在同步课程…", "start": "正在准备学习任务…", "test_ai": "正在检查模型服务…", "diagnose": "正在检查运行环境…", "assessment_scan": "正在同步章节测验与考试…", "assessment_run": "正在自动答题并交卷…"}[action]
             minutes = self.settings["budget_minutes"] if budget is None else budget
             self.deadline = self.started_at + minutes * 60 if action == "start" and minutes else None
             for course in self.courses:
                 if action == "start":
                     course["status"] = "ready"
-                if course_key(course) in {course_key(c) for c in selected}:
+                if action == "start" and course_key(course) in {course_key(c) for c in selected}:
                     course["status"] = "queued"
             payload = {"action": action, "root": str(self.root), "local": str(self.local),
                        "runtime": self.runtime.name, "settings": copy.deepcopy(self.settings),
                        "ai": copy.deepcopy(self.ai), "courses": selected,
+                       "assessments": assessment_items if action == "assessment_run" else [],
                        "verify_probe_enabled": self.verify_probe_enabled,
                        "probe_signal_file": str(self.probe_signal_file) if self.probe_signal_file else None,
                        "task_id": self.task_id, "started_at": self.started_at,
@@ -446,6 +463,16 @@ class Controller:
                                  "phase": event.get("phase", "video"), "remaining": event.get("remaining")}
             elif event_type == "ai_usage":
                 self.ai_requests = event["count"]
+            elif event_type == "assessments":
+                key = event["course_key"]
+                known = {course_key(c) for c in self.courses}
+                if key not in known:
+                    return
+                self.assessments = [row for row in self.assessments if row["course_key"] != key] + event["items"]
+            elif event_type == "assessment_result":
+                self.assessment_results[event["key"]] = {k: v for k, v in event.items() if k != "type"}
+            elif event_type == "assessment_course":
+                self.current = event["key"]
             elif event_type == "course":
                 self.current = event["key"]
                 self.progress = None
@@ -483,7 +510,8 @@ class Controller:
                 self.result_reason = event.get("reason") or self.result_reason
                 if self.result_reason == "verification":
                     remaining = {course_key(course) for course in self.courses if course["status"] != "done"}
-                    keys = [course_key(course) for course in self.job_courses if course_key(course) in remaining]
+                    keys = [course_key(course) for course in self.job_courses
+                            if (self.action or "").startswith("assessment_") or course_key(course) in remaining]
                     self.verification = self.verification_context(keys, self.current, self.task_id)
 
     def run_job(self, payload):
@@ -618,7 +646,7 @@ class Controller:
                 (self.local / "active-task.json").unlink(missing_ok=True)
         except OSError:
             self.log("无法保存任务历史，请检查用户目录权限。", "warning", archive=False)
-        if self.action == "start" or self.result_reason == "auth":
+        if self.action in ("start", "assessment_run") or self.result_reason == "auth":
             event = self.result_reason if self.result_reason in ("verification", "auth") else "finished"
             title = {"verification": "KillZHS 需要手动验证", "auth": "KillZHS 登录状态需要检查"}.get(
                 event, "KillZHS 任务需要查看" if self.status == "error" else "KillZHS 本次任务已结束")
@@ -717,6 +745,22 @@ class Controller:
     def run_demo(self, payload):
         control = TaskControl(payload.get("stop_file"), payload.get("deadline"))
         self.log("演示操作：" + payload["action"] + "，不会连接智慧树。")
+        if payload["action"] in ("assessment_scan", "assessment_run"):
+            from killzhs_assessments import item_key
+            if payload["action"] == "assessment_scan":
+                key = course_key(payload["courses"][0])
+                items = [{"id": "demo" + str(index), "exam_id": "paper" + str(index), "kind": kind,
+                    "course_key": key, "name": name, "state": 1, "start": "", "end": "",
+                    "url": "https://onlineexamh5new.zhihuishu.com/stuExamWeb.html"}
+                    for index, kind, name in ((1, "chapter", "第一章 · 章节测验"), (2, "exam", "课程在线考试"))]
+                self.event({"type": "assessments", "course_key": key, "items": items})
+            else:
+                for row in payload["assessments"]:
+                    control.check()
+                    self.event({"type": "assessment_result", "key": item_key(row), "state": "submitted",
+                                "answered": 5, "score": None, "message": "演示交卷成功，未连接平台或模型。"})
+            self.event({"type": "result", "message": "演示操作完成，未连接平台或模型。", "error": False})
+            return
         if payload["action"] == "start":
             for course in payload["courses"]:
                 control.check()
@@ -817,7 +861,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
-        self.send_header("Content-Security-Policy", "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'")
+        self.send_header("Content-Security-Policy", "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-src https://*.zhihuishu.com; frame-ancestors 'none'; base-uri 'none'")
         self.end_headers()
         try:
             self.wfile.write(body)
@@ -856,6 +900,7 @@ class Handler(BaseHTTPRequestHandler):
         allowed = {"/": ("index.html", "text/html; charset=utf-8"),
                    "/app.js": ("app.js", "text/javascript; charset=utf-8"),
                    "/features.js": ("features.js", "text/javascript; charset=utf-8"),
+                   "/assessments.js": ("assessments.js", "text/javascript; charset=utf-8"),
                    "/styles.css": ("styles.css", "text/css; charset=utf-8"),
                    "/favicon.svg": ("favicon.svg", "image/svg+xml")}
         if path not in allowed:
@@ -865,6 +910,7 @@ class Handler(BaseHTTPRequestHandler):
         body = (ASSETS / filename).read_bytes()
         if filename == "index.html":
             body = body.replace(b"<!-- KILLZHS_FEATURE_PAGES -->", (ASSETS / "features.html").read_bytes())
+            body = body.replace(b"</main>", (ASSETS / "assessments.html").read_bytes() + b"</main>")
         self.send_content(200, body, content_type)
 
     def do_POST(self):

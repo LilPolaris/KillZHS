@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/styles.css">
   <script src="/app.js" defer></script>
   <script src="/features.js" defer></script>
+  <script src="/assessments.js" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">跳到主要内容</a>
@@ -21,6 +22,8 @@
       <a href="#logs" class="nav-link" data-view="logs"><span data-icon="terminal"></span>运行日志<span class="nav-count" id="log-count">0</span></a>
       <a href="#settings" class="nav-link" data-view="settings"><span data-icon="sliders"></span>偏好设置</a>
       <a href="#ai" class="nav-link" data-view="ai"><span data-icon="layers"></span>AI 配置</a>
+      <a href="#assessments" class="nav-link" data-view="assessments"><span data-icon="book"></span>测验与考试</a>
+      <a href="#official" class="nav-link" data-view="official"><span data-icon="shield"></span>官网与验证</a>
       <a href="#plan" class="nav-link" data-view="plan"><span data-icon="calendar"></span>定时计划</a>
       <a href="#notifications" class="nav-link" data-view="notifications"><span data-icon="bell"></span>消息通知</a>
     </nav>
@@ -39,7 +42,7 @@
       <div class="dependency-banner" id="dependency-banner" role="status" hidden></div>
       <section class="verification-panel" id="verification-panel" role="alert" aria-labelledby="verification-title" hidden>
         <div><h2 id="verification-title">需要完成平台验证</h2><p id="verification-course"></p><p>点击下方入口，在官方页面完成验证。若要求登录，请使用同一个知到账号；验证后先暂停官方播放器，再返回这里。</p></div>
-        <div class="verification-actions"><a class="button primary" id="open-verification" target="_blank" rel="noopener noreferrer">打开当前课程验证<span data-icon="arrow-up-right"></span></a><button class="button secondary" id="restart-after-verification" type="button">验证后重新开始</button><button class="button secondary" id="confirm-verification" type="button" hidden>我已完成网页验证</button></div>
+        <div class="verification-actions"><button class="button primary" id="embed-verification" type="button">在工作台打开验证</button><a class="button secondary" id="open-verification" target="_blank" rel="noopener noreferrer">打开当前课程验证<span data-icon="arrow-up-right"></span></a><button class="button secondary" id="restart-after-verification" type="button">验证后重新开始</button><button class="button secondary" id="confirm-verification" type="button" hidden>我已完成网页验证</button></div>
         <p class="verification-note" id="verification-note">重新开始会按当前设置计时；已完成的视频由脚本自动跳过。工作台尚不能自动确认官方验证是否完成。</p>
       </section>
 

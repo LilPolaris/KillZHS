@@ -6,6 +6,7 @@ execution.json
 *.js
 !web/app.js
 !web/features.js
+!web/assessments.js
 .local/
 output/
 .playwright-cli/

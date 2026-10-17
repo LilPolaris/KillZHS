@@ -141,6 +141,32 @@ def main():
                         assert controller.job_id == same_job
                         assert controller.history[-1]["verification_probe"]["normal_reports"] == 3
                     controller.run_demo = original_demo
+                    # New assessment view: scan never opens a real paper; demo auto-submit
+                    # exercises browser -> authenticated action -> worker events -> UI.
+                    page.locator("a[data-view=ai]").click()
+                    page.locator("#ai-enabled").check()
+                    page.locator("#ai-form button[type=submit]").click()
+                    page.wait_for_function("() => state.ai.enabled && !pending")
+                    page.locator("a[data-view=assessments]").click()
+                    page.locator("#assessment-scan").click()
+                    page.wait_for_function("() => state.action === 'assessment_scan' && state.status === 'done' && !pending")
+                    assert page.locator("[data-assessment]").count() == 2
+                    page.locator("[data-assessment]").first.check()
+                    page.locator("#assessment-run").click()
+                    page.wait_for_function("() => state.action === 'assessment_run' && state.status === 'done' && !pending")
+                    assert "演示交卷成功" in page.locator("#assessment-list").inner_text()
+                    assert controller.history[-1]["action"] == "assessment_run"
+                    assert controller.ai_requests == 0
+                    page.screenshot(path=str(output / "assessments-desktop.png"), full_page=True)
+                    page.locator("[data-open-assessment]").first.click()
+                    page.wait_for_function("() => location.hash === '#official'")
+                    page.locator("#official-frame").wait_for(state="visible")
+                    assert page.locator("#official-frame").get_attribute("src") is None
+                    page.locator("#official-return").click()
+                    assert page.locator("#official-frame").is_hidden()
+                    page.set_viewport_size({"width": 390, "height": 844})
+                    page.screenshot(path=str(output / "assessments-mobile.png"), full_page=True)
+                    assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1")
                     page.locator("a[data-view=notifications]").click()
                     page.set_viewport_size({"width": 390, "height": 844})
                     page.mouse.move(389, 843)
