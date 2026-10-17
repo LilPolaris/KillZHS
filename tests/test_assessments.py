@@ -175,17 +175,33 @@ class WorkflowTest(unittest.TestCase):
 
     def test_exam_sso_uses_cas_and_expired_credentials_request_a_fresh_scan_login(self):
         self.service.session = Mock()
-        response = Mock(url="https://studentexam-api.zhihuishu.com/studentExam/gateway/t/v1/student/getStudentHomework")
+        response = Mock(url="https://studentexam-api.zhihuishu.com/studentExam/gateway/t/v1/student/getStudentHomework",
+                        status_code=404, history=[Mock(status_code=302)])
         self.service.session.get.return_value = response
         self.service.authenticate("chapter")
         call = self.service.session.get.call_args
         self.assertEqual(call.args[0], "https://passport.zhihuishu.com/cas/login")
         self.assertTrue(call.kwargs["params"]["service"].endswith("/student/getStudentHomework"))
+        response.raise_for_status.assert_not_called()
         response.url = "https://passport.zhihuishu.com/login"
         with self.assertRaises(AssessmentError) as caught:
             self.service.authenticate("exam")
         self.assertEqual(caught.exception.reason, "auth")
         self.assertIn("重新扫码登录工作台", str(caught.exception))
+
+    def test_exam_transport_failure_preserves_chapter_list(self):
+        import requests
+        self.service.course_key = "zhidao:course1"
+        self.service.authenticated.add("exam")
+        def query(path, data, **kwargs):
+            if path == "student/getStudentHomework":
+                return {"studentHomeworkList": [{"id": "s1", "examId": "e1", "state": 1, "examName": "Chapter"}], "next": -1}
+            raise requests.HTTPError("HTTP 404")
+        self.service.query = query
+        rows, incomplete = self.service.scan()
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["kind"], "chapter")
+        self.assertEqual(incomplete, ["exam"])
 
     def test_transport_encrypts_unicode_and_has_no_redirect_or_retry(self):
         import requests

@@ -169,9 +169,12 @@ class SharedAssessments:
         service = f"https://{host}.zhihuishu.com/{prefix}/gateway/t/v1/student/{endpoint}"
         response = self.session.get("https://passport.zhihuishu.com/cas/login",
                                     params={"service": service}, timeout=30)
-        response.raise_for_status()
         if urlsplit(response.url).hostname != host + ".zhihuishu.com":
             raise AssessmentError("考试系统登录凭据已失效。请回到学习概览重新扫码登录工作台，再同步测验；只登录浏览器不会更新脚本凭据。", "auth")
+        # CAS completes via a GET redirect. The destination list API accepts
+        # POST; a GET 404/405 after a real redirect does not undo that login.
+        if not (response.status_code in (404, 405) and response.history):
+            response.raise_for_status()
         self.authenticated.add(kind)
 
     def query(self, path, data, *, kind="chapter"):
@@ -222,6 +225,7 @@ class SharedAssessments:
         return result
 
     def scan(self):
+        import requests
         rows, incomplete = [], []
         for kind in HOSTS:
             try:
@@ -258,6 +262,9 @@ class SharedAssessments:
                     raise
                 incomplete.append(kind)
                 self.log(("章节测验" if kind == "chapter" else "在线考试") + "同步不完整：" + str(error), "warning")
+            except requests.RequestException:
+                incomplete.append(kind)
+                self.log(("章节测验" if kind == "chapter" else "在线考试") + "接口暂时无法访问，已保留其他可读取的清单；请稍后重试或在官网查看。", "warning")
         return list({item_key(row): row for row in rows}.values()), incomplete
 
     def answer(self, question):
