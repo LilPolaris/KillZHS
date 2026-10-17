@@ -235,6 +235,25 @@ class ProbeTest(unittest.TestCase):
         probe.course_kind = "ai"
         self.assertIsNone(probe.capture(URL, {}, "POST", "form"))
 
+    def test_popup_captcha_propagates_without_an_additional_progress_report(self):
+        client, _, _, _, _ = self.prepare(enabled=False)
+        client.speed, client.end_thre, client.progressbar_view = 2, 1, False
+        client._checkCookies = lambda: None
+        client._checkTimeLimit = lambda _: None
+        client._sessionReady = lambda *_: None
+        client.watchVideo = lambda *_: None
+        client.getZhidaoContext = lambda _: ObjDict({"fucked_time": 0,
+            "videos": {10: {"studyTotalTime": 0, "watchState": 0, "name": "video", "videoSec": 2, "videoId": 10}}})
+        client.prelearningNote = lambda *_: ObjDict({"studiedLessonDto": {"id": 1}})
+        client.loadVideoPointerInfo = lambda *_: ObjDict({"questionPoint": [{"timeSec": 1, "questionIds": [1]}]})
+        client.threeDimensionalCourseWare = lambda *_: None
+        client.lessonPopoupExam = Mock(side_effect=self.legacy.CaptchaException("captcha required"))
+        client.saveDatabaseIntervalTimeV2 = Mock()
+        with patch.object(self.legacy.time, "sleep", lambda _: None), patch.object(self.legacy, "random", return_value=1):
+            with self.assertRaises(self.legacy.CaptchaException):
+                client.fuckZhidaoVideo("course", 10)
+        client.saveDatabaseIntervalTimeV2.assert_not_called()
+
     def test_replay_has_one_wire_attempt_and_does_not_follow_redirects(self):
         from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
         import threading

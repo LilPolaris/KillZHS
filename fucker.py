@@ -582,6 +582,8 @@ class Fucker:
                                 ).lessonTestQuestionUseInterfaceDtos[0].testQuestion
                     answer = 2    # answer delay time
                     report = True # set report flag
+                except CaptchaException:
+                    raise
                 except Exception as e:
                     logger.error(f"can't get question detail:\n{e}")
             ## answer questions
