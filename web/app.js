@@ -199,10 +199,16 @@ $("refresh").addEventListener("click", () => begin("refresh"));
 $("start").addEventListener("click", () => begin("start"));
 $("stop").addEventListener("click", () => action({ action: "stop" }));
 $("open-verification").addEventListener("click", (event) => {
-  if (!connected || pending || state?.status === "running" || !state?.verification || state.demo) {
+  if (!connected || pending || state?.stop_requested || (state?.status === "running" && !state.verification_probe?.awaiting_confirmation) || !state?.verification || state.demo) {
     event.preventDefault();
     if (state?.demo) toast("演示模式：这里只展示验证入口，不打开真实课程。");
   }
+});
+$("confirm-verification").addEventListener("click", () => {
+  const probe = state?.verification_probe;
+  if (!probe?.awaiting_confirmation) return;
+  action({ action: "confirm_verification", task_id: probe.task_id, probe_id: probe.probe_id },
+    "确认已发送，正在尝试原地恢复，不会重新启动任务。");
 });
 $("restart-after-verification").addEventListener("click", () => {
   const known = new Set((state?.courses || []).map(keyOf));
@@ -216,21 +222,29 @@ $("restart-after-verification").addEventListener("click", () => {
 function renderVerification() {
   const verification = state?.verification;
   $("verification-panel").hidden = !verification;
+  const waiting = Boolean(state?.verify_probe_enabled && state.status === "running" && state.verification_probe?.awaiting_confirmation);
+  $("confirm-verification").hidden = !waiting;
+  $("confirm-verification").disabled = !waiting || !connected || pending || Boolean(state?.stop_requested || state?.verification_probe?.confirmation_sent);
+  $("restart-after-verification").hidden = waiting;
   if (!verification) { verificationIdentity = null; return; }
   const identity = JSON.stringify([verification.task_id, verification.course_keys]);
   if (identity !== verificationIdentity) {
     verificationIdentity = identity;
     if (!selected.size) selected = new Set(verification.course_keys);
   }
-  const disabled = !connected || pending || state.status === "running";
+  const disabled = !connected || pending || Boolean(state.stop_requested) || (state.status === "running" && !waiting);
   const known = new Set(state.courses.map(keyOf));
   const canRestart = verification.course_keys.some((key) => known.has(key));
   $("verification-course").textContent = verification.course_name ? "当前课程：" + verification.course_name : "本次任务已停止，请先在官方页面处理验证。";
   $("open-verification").href = verification.url;
   $("open-verification").setAttribute("aria-disabled", String(disabled));
   $("open-verification").textContent = verification.direct ? "打开当前课程验证 ↗" : "打开知到官方页面 ↗";
-  $("restart-after-verification").disabled = disabled || !canRestart || !(state.logged_in || state.saved_session);
+  $("restart-after-verification").disabled = disabled || state.status === "running" || !canRestart || !(state.logged_in || state.saved_session);
   $("restart-after-verification").title = canRestart ? "确认已在官方页面完成验证后，按当前设置重新开始本次未完成的课程。" : "课程清单已变化，请先同步并重新选择。";
+  $("verification-title").textContent = waiting ? "等待验证（实验）" : "需要完成平台验证";
+  $("verification-note").textContent = waiting
+    ? "当前任务保持等待；确认后仅尝试原地恢复一次，不重新登录。等待期间时限仍在计时，可随时停止。"
+    : "重新开始会按当前设置计时；已完成的视频由脚本自动跳过。工作台尚不能自动确认官方验证是否完成。";
 }
 
 function updateButtons() {
@@ -407,7 +421,7 @@ function render() {
   $("offline-banner").hidden = true;
   $("dependency-banner").hidden = !state.missing_dependencies.length || state.demo;
   $("dependency-banner").textContent = `当前 Python 环境缺少 ${state.missing_dependencies.join("、")}。请使用项目内的「启动KillZHS.bat」启动。`;
-  $("app-version").textContent = "KillZHS · " + state.version;
+  $("app-version").textContent = "KillZHS · " + state.version + (state.verify_probe_available || state.verify_probe_enabled ? " · 验证实验" : "");
   $("auth-badge").textContent = state.logged_in ? (state.demo ? "演示账号" : "已连接") : "未登录";
   $("auth-badge").className = "badge" + (state.logged_in ? " green" : "");
   const hasQR = Boolean(state.qr && busy && state.action === "login");
@@ -418,7 +432,7 @@ function render() {
   $("login-title").textContent = hasQR ? "打开知到 App，扫一扫" : state.logged_in ? "账号已连接，准备就绪" : "连接你的知到账号";
   $("login-description").innerHTML = hasQR ? "扫码后请在手机上确认<br>二维码过期后会自动刷新" : state.demo ? "当前所有课程和运行均为本地模拟<br>不会连接真实账号" : state.logged_in ? "选择想学的课程，就可以开始了<br>需要换账号时可重新扫码" : "使用知到 App 扫码登录<br>已有登录状态可直接尝试同步";
   $("login-button-label").textContent = busy && state.action === "login" ? "等待扫码确认…" : state.logged_in ? "重新扫码登录" : "扫码登录";
-  const taskLabel = state.verification && !busy ? "等待验证" : state.stop_requested ? "正在收尾" : { idle: "等待开始", running: state.action === "start" ? "正在学习" : state.action === "login" ? "正在登录" : "正在同步", done: "任务已结束", error: "需要查看", stopped: "已停止", limited: "达到时长" }[state.status] || "等待开始";
+  const taskLabel = state.stop_requested ? "正在收尾" : state.verify_probe_enabled && state.verification_probe?.awaiting_confirmation ? "等待验证（实验）" : state.verification && !busy ? "等待验证" : { idle: "等待开始", running: state.action === "start" ? "正在学习" : state.action === "login" ? "正在登录" : "正在同步", done: "任务已结束", error: "需要查看", stopped: "已停止", limited: "达到时长" }[state.status] || "等待开始";
   $("task-status").textContent = taskLabel;
   $("task-status").className = "badge" + (busy ? " green" : state.status === "error" ? " red" : "");
   $("task-message").textContent = state.message;
@@ -433,7 +447,7 @@ function render() {
     $("video-progress").value = state.progress.value;
   }
   renderVerification();
-  if (state.verification && !busy) {
+  if (state.verification && (!busy || state.verification_probe?.awaiting_confirmation)) {
     $("login-title").textContent = "账号需要完成验证";
     $("login-description").textContent = "请使用页面上方的验证入口，完成后返回工作台重新开始。";
   }

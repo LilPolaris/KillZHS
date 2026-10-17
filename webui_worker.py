@@ -5,6 +5,7 @@ from contextlib import redirect_stdout, redirect_stderr
 import io
 import json
 import logging
+import os
 from pathlib import Path
 import sys
 import time
@@ -13,6 +14,7 @@ from webui import PREFIX, atomic_json, course_key, load_json, normalize_course
 from killzhs_config import AI_DEFAULTS
 from killzhs_privacy import collect_secrets, redact as redact_text
 from killzhs_runtime import TaskControl, TaskStopped
+from killzhs_verification import VerificationProbe
 
 OUTPUT = sys.stdout
 SECRETS = set()
@@ -64,14 +66,15 @@ class Console(io.TextIOBase):
 class LogBridge(logging.Handler):
     def emit(self, record):
         text = record.getMessage()
-        if record.levelno >= logging.ERROR or "captcha" in text.lower():
+        diagnostic = getattr(record, "verification_diagnostic", False)
+        if not diagnostic and (record.levelno >= logging.ERROR or "captcha" in text.lower()):
             ISSUES.add("attention")
-        if "captcha" in text.lower():
+        if not diagnostic and "captcha" in text.lower():
             ISSUES.add("verification")
-        if "time limit exceeded" in text.lower():
+        if not diagnostic and "time limit exceeded" in text.lower():
             ISSUES.add("limited")
         # The original logger can include authentication responses in INFO records.
-        if "one-time" in text.lower() or "qr scanned" in text.lower():
+        if not diagnostic and ("one-time" in text.lower() or "qr scanned" in text.lower()):
             text = "已扫码，请在手机上确认登录。"
         log(text, "error" if record.levelno >= logging.ERROR else "warning" if record.levelno >= logging.WARNING else "info")
 
@@ -223,8 +226,25 @@ def run(payload):
         return original_request(session, method, url, *args, **kwargs)
 
     requests.sessions.Session.request = bounded_request
+    client.diagnostic_secrets = SECRETS
+    client.batch_started_monotonic = time.monotonic() - max(0, time.time() - payload.get("started_at", time.time()))
+
+    def probe_report(**values):
+        if values["phase"] == "waiting":
+            ISSUES.add("verification")
+        elif values["phase"] == "observing" and values.get("normal_reports") == 0:
+            ISSUES.discard("verification")
+        emit("verification_probe", worker_pid=os.getpid(), **values)
+
+    probe = VerificationProbe(client, control,
+        Path(payload["probe_signal_file"]) if payload.get("probe_signal_file") else None,
+        payload.get("task_id"), enabled=payload.get("verify_probe_enabled") is True and os.environ.get("KILLZHS_VERIFY_PROBE") == "1",
+        report=probe_report, log=log)
+    client.verification_probe = probe
     attention = 0
     for course in payload["courses"]:
+        probe.course_kind = course["kind"]
+        client.verification_video = None
         control.begin_course(settings["limit"])
         control.check()
         ISSUES.clear()
@@ -252,6 +272,8 @@ def run(payload):
             if type(error).__name__ == "CaptchaException":
                 ISSUES.add("verification")
             log("课程执行失败：" + redact(error), "error")
+        finally:
+            probe.finish("course_ended")
         attention += status == "attention"
         emit("course", key=key, status=status)
         log(course["name"] + " · " + {"done": "本次任务已运行。", "limited": "已达到本次时限。", "attention": "存在异常，请查看日志。"}[status])

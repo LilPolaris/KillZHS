@@ -1,16 +1,20 @@
 """Offline browser -> API -> task archive smoke test on an isolated demo server."""
 
 import json
+import os
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 import sys
 import tempfile
 import threading
+import time
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from playwright.sync_api import sync_playwright
 from webui import Controller, Handler
+from killzhs_runtime import TaskControl
 
 
 def main():
@@ -93,6 +97,50 @@ def main():
                     assert all(row["id"] != "demo01" for row in controller.job_courses)
                     page.locator("#stop").click()
                     page.wait_for_function("() => state.status === 'stopped'", timeout=10000)
+                    def probe_demo(payload):
+                        probe_id = "f" * 32
+                        controller.event({"type": "course", "key": "zhidao:demo02", "status": "running"})
+                        def report(phase, **fields):
+                            controller.event({"type": "verification_probe", "phase": phase,
+                                "probe_id": probe_id, "task_id": payload["task_id"], **fields})
+                        report("waiting", timeout_seconds=1800)
+                        report("baseline", baseline={"study_total_time": 100})
+                        control = TaskControl(payload["stop_file"], payload["deadline"])
+                        deadline = time.monotonic() + 10
+                        while time.monotonic() < deadline:
+                            control.check()
+                            signal = Path(payload["probe_signal_file"])
+                            if signal.is_file():
+                                value = json.loads(signal.read_text(encoding="utf-8"))
+                                if value.get("task_id") == payload["task_id"] and value.get("probe_id") == probe_id:
+                                    report("confirmed")
+                                    report("observing", normal_reports=0)
+                                    report("observed", normal_reports=3, progress_delta_seconds=30,
+                                           outcome="three_normal_reports")
+                                    controller.event({"type": "course", "key": "zhidao:demo02", "status": "done"})
+                                    controller.event({"type": "result", "message": "离线验证实验已模拟。", "error": False})
+                                    return
+                            time.sleep(.05)
+                        raise AssertionError("Browser did not send the matching verification signal")
+
+                    controller.run_demo = probe_demo
+                    page.locator("#clear-selection").click()
+                    page.locator('[data-key="zhidao:demo02"]').check()
+                    with patch.dict(os.environ, {"KILLZHS_VERIFY_PROBE": "1"}):
+                        page.locator("#start").click()
+                        page.wait_for_function("() => state.verification_probe?.awaiting_confirmation")
+                        same_job = controller.job_id
+                        assert page.locator("#task-status").inner_text() == "等待验证（实验）"
+                        assert page.locator("#confirm-verification").is_enabled()
+                        assert page.locator("#restart-after-verification").is_hidden()
+                        assert page.locator("#open-verification").get_attribute("aria-disabled") == "false"
+                        page.evaluate("window.scrollTo(0, 0)")
+                        page.screenshot(path=str(output / "verification-probe.png"), full_page=True)
+                        page.locator("#confirm-verification").click()
+                        page.wait_for_function("() => state.status === 'done' && state.verification_probe?.phase === 'observed'")
+                        assert controller.job_id == same_job
+                        assert controller.history[-1]["verification_probe"]["normal_reports"] == 3
+                    controller.run_demo = original_demo
                     page.locator("a[data-view=notifications]").click()
                     page.set_viewport_size({"width": 390, "height": 844})
                     page.mouse.move(389, 843)

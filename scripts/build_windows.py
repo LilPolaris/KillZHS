@@ -63,6 +63,7 @@ def main():
     shutil.copyfile(ROOT / "LICENSE", bundle / "LICENSE")
     shutil.copyfile(ROOT / "NOTICE.md", bundle / "NOTICE.md")
     shutil.copyfile(ROOT / "docs" / "WINDOWS.md", bundle / "使用说明.txt")
+    shutil.copyfile(ROOT / "scripts" / "launch_verification_probe.bat", bundle / "验证实验模式.bat")
     forbidden = {"config.json", "cookies.json", "execution.json", "ai.json", "settings.json", "history.json",
                  "notifications.json", "active-task.json", "instance.json", ".env"}
     for path in bundle.rglob("*"):

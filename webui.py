@@ -148,6 +148,10 @@ class Controller:
         self.result_reason = None
         self.current = None
         self.verification = None
+        self.verification_probe = None
+        self.verify_probe_enabled = False
+        self.probe_signal_file = None
+        self.probe_notified = set()
         self.message = "准备好后，扫码登录并同步课程。"
         self.dependencies = [name for name, module in MODULES.items() if importlib.util.find_spec(module) is None]
         raw_courses = load_json(self.local / "courses.json", load_json(self.root / "execution.json", []))
@@ -240,6 +244,8 @@ class Controller:
                 "ai_requests": self.ai_requests, "active_ai_max_requests": self.active_ai_max_requests,
                 "stop_requested": self.stop_requested,
                 "verification": self.verification,
+                "verification_probe": self.verification_probe, "verify_probe_enabled": self.verify_probe_enabled,
+                "verify_probe_available": os.environ.get("KILLZHS_VERIFY_PROBE") == "1",
                 "notifications": public_notifications(self.notifications),
                 "app": "KillZHS"}
             if history_revision != self.history_revision:
@@ -258,6 +264,19 @@ class Controller:
             self.stop()
             return
         with self.lock:
+            if action == "confirm_verification":
+                probe = self.verification_probe
+                if (self.status != "running" or self.stop_requested or not self.verify_probe_enabled
+                        or not probe or not probe.get("awaiting_confirmation") or not self.probe_signal_file
+                        or data.get("task_id") != self.task_id or data.get("probe_id") != probe.get("probe_id")):
+                    raise InputError("当前没有可确认的验证实验，页面可能已过期，请刷新后重试。")
+                if probe.get("confirmation_sent"):
+                    raise InputError("确认已发送，请等待本次请求结果，不要重复点击。")
+                atomic_json(self.probe_signal_file, {"task_id": self.task_id, "probe_id": probe["probe_id"],
+                                                   "confirmed_at": time.time()})
+                probe["confirmation_sent"] = True
+                self.log("验证实验：已收到用户的网页验证完成确认，等待 worker 重发一次原请求。")
+                return
             if action == "ai_settings":
                 updated = validate_ai(data.get("ai"), self.ai)
                 if not self.demo:
@@ -348,10 +367,14 @@ class Controller:
             self.active_ai_max_requests = self.ai["max_requests"] if action == "start" else None
             self.result_status, self.ended_at = None, None
             self.result_reason = None
+            self.verify_probe_enabled = action == "start" and os.environ.get("KILLZHS_VERIFY_PROBE") == "1"
+            self.verification_probe = None
+            self.probe_notified.clear()
             if action == "start":
                 self.verification = None
             self.stop_requested = None
             self.stop_file = Path(self.runtime.name) / f"stop-{self.job_id}.json"
+            self.probe_signal_file = Path(self.runtime.name) / f"verify-{self.job_id}.json" if self.verify_probe_enabled else None
             self.qr, self.progress, self.current = None, None, None
             self.started_at = time.time()
             self.task_id, self.archive_failed = uuid4().hex, False
@@ -373,6 +396,9 @@ class Controller:
             payload = {"action": action, "root": str(self.root), "local": str(self.local),
                        "runtime": self.runtime.name, "settings": copy.deepcopy(self.settings),
                        "ai": copy.deepcopy(self.ai), "courses": selected,
+                       "verify_probe_enabled": self.verify_probe_enabled,
+                       "probe_signal_file": str(self.probe_signal_file) if self.probe_signal_file else None,
+                       "task_id": self.task_id, "started_at": self.started_at,
                        "deadline": self.deadline, "stop_file": str(self.stop_file)}
             if self.deadline:
                 job_id = self.job_id
@@ -428,6 +454,29 @@ class Controller:
                         course["status"] = event["status"]
                         if not self.stop_requested:
                             self.message = event.get("message", course["name"])
+            elif event_type == "verification_probe":
+                if not self.verify_probe_enabled or event.get("task_id") != self.task_id or not re.fullmatch(r"[0-9a-f]{32}", str(event.get("probe_id", ""))):
+                    return
+                if not self.verification_probe or self.verification_probe.get("probe_id") != event["probe_id"]:
+                    self.verification_probe = {"probe_id": event["probe_id"], "task_id": self.task_id}
+                self.verification_probe.update({key: value for key, value in event.items() if key not in ("type",)})
+                phase = event.get("phase")
+                if phase == "waiting":
+                    self.verification_probe.update(awaiting_confirmation=True, confirmation_sent=False)
+                    remaining = {course_key(course) for course in self.courses if course["status"] != "done"}
+                    self.verification = self.verification_context([course_key(course) for course in self.job_courses
+                        if course_key(course) in remaining], self.current, self.task_id)
+                    self.message = "等待验证（实验）：请完成官网验证后，点击“我已完成网页验证”。"
+                    if event["probe_id"] not in self.probe_notified:
+                        self.probe_notified.add(event["probe_id"])
+                        self.notify("verification", "KillZHS 等待验证（实验）", self.message, task_id=self.task_id)
+                elif phase in ("confirmed", "replaying", "replay_result", "observing", "observed", "ended"):
+                    self.verification_probe["awaiting_confirmation"] = False
+                    if phase == "observing":
+                        self.verification = None
+                        self.message = "验证实验：原请求已成功，正在观察后续正常上报；进度仍需平台确认。"
+                self.log("验证实验事件：" + json.dumps({key: value for key, value in event.items()
+                    if key not in ("type", "task_id", "probe_id")}, ensure_ascii=False))
             elif event_type == "result":
                 self.message = redact(event["message"], self.secrets)
                 self.result_status = event["status"] if event.get("status") in ("stopped", "limited") else "error" if event.get("error") else "done"
@@ -547,7 +596,8 @@ class Controller:
             "action": self.action, "origin": self.origin, "status": self.status,
             "message": self.message, "courses": [c["name"] for c in self.job_courses],
             "ai_requests": self.ai_requests, "reason": self.result_reason,
-            "verification": copy.deepcopy(self.verification) if self.result_reason == "verification" else None}
+            "verification": copy.deepcopy(self.verification) if self.result_reason == "verification" else None,
+            "verification_probe": copy.deepcopy(self.verification_probe)}
 
     def save_history(self):
         self.history_revision = uuid4().hex
@@ -575,7 +625,8 @@ class Controller:
             body = {"verification": "本批次已停止。请打开知到官方页面完成验证后，再手动开始任务。",
                     "auth": "当前任务无法使用或确认登录状态，请先检查网络并同步课程，必要时重新扫码。"}.get(
                         event, "请在历史记录中查看本次结果和详细日志。课程完成情况以平台为准。")
-            self.notify(event, title, body, task_id=row["id"])
+            if event != "verification" or not self.probe_notified:
+                self.notify(event, title, body, task_id=row["id"])
 
     def recover_history(self):
         active = load_json(self.local / "active-task.json", {})

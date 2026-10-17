@@ -61,7 +61,8 @@ def finish_on_stop(function):
             return function(client, *args, **kwargs)
         except TaskStopped:
             flush = client._stop_flush
-            if flush is not None:
+            pending_verification = getattr(getattr(client, "verification_probe", None), "suppress_stop_flush", False)
+            if flush is not None and not pending_verification:
                 try:
                     with client.task_control.cleanup():
                         flush()

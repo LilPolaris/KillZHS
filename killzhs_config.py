@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import re
 from urllib.parse import urlsplit
 
-VERSION = "0.1.0-beta.5"
+VERSION = "0.1.0-beta.6"
 DEFAULTS = {"speed": None, "limit": 0, "threshold": 0.91, "remember": True, "budget_minutes": 0}
 
 

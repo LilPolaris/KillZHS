@@ -1,6 +1,7 @@
 from zd_utils import Cipher, getEv, WatchPoint, HOME_KEY, VIDEO_KEY, QA_KEY, AI_KEY, EXAM_KEY
 from utils import progressBar, HMS, wipeLine, list_to_cookie_jar, getRealPath
 from killzhs_runtime import finish_on_stop
+from killzhs_verification import challenge_details
 from urllib.parse import unquote_plus as unquote
 from requests.adapters import HTTPAdapter, Retry
 from requests.cookies import RequestsCookieJar
@@ -107,6 +108,9 @@ class Fucker:
 
         self.limit = abs(limit)                    # time limit for fucking, in minutes
         self.task_control = None                  # Optional local-UI cancellation hook.
+        self.verification_probe = None
+        self.verification_video = None
+        self.batch_started_monotonic = time.monotonic()
         self.speed = speed and max(speed, 0.1)     # video play speed, Falsy values for default
         self.end_thre = max(end_thre or 0, 0.0) or 0.91 # video play end threshold, above this will be considered as finished
         self.prefix = "  |"                        # prefix for tree view
@@ -493,6 +497,7 @@ class Fucker:
         * `RAC_id`: `recruitAndCourseId`
         * `video_id`: `videoId`
         """
+        self.verification_video = {"course_id": RAC_id, "video_id": video_id, "played_time": None}
         self._checkStop()
         self._checkCookies()
         self._checkTimeLimit(RAC_id)
@@ -500,6 +505,7 @@ class Fucker:
         self._sessionReady(ctx)
         video = ctx.videos[video_id]
         played_time = video.studyTotalTime
+        self.verification_video["played_time"] = played_time
         watch_state = video.watchState
         if not video:
             raise ValueError(f"Video {video_id} not found")
@@ -562,6 +568,7 @@ class Fucker:
             if pause:
                 pause -= 1
                 played_time = last_submit
+            self.verification_video["played_time"] = played_time
             ## update watch point
             if not elapsed_time % 2:
                 wp.add(played_time)
@@ -634,8 +641,18 @@ class Fucker:
         # 如果是POST请求，且contentType为json，将data转为json字符串
         if method == "POST" and contentType == "json":
             form = json.dumps(form)
+        probe = getattr(self, "verification_probe", None)
+        captured = probe.capture(url, form, method, contentType) if probe else None
         ret = self._apiQuery(url, data=form, method=method,
                              contentType=contentType)
+        if ret.get("code") == -12:
+            detail = challenge_details(self, url, ret.get("message") or ret.get("msg"), (data, form))
+            logger.warning("平台验证诊断：" + json.dumps(detail, ensure_ascii=False),
+                           extra={"verification_diagnostic": True})
+            if probe:
+                replacement = probe.handle(captured)
+                if replacement is not None:
+                    return replacement
         if ok_code is not None and ret.code != ok_code:
             ret.default = None
             match ret.code:
@@ -644,8 +661,11 @@ class Fucker:
                 case _:
                     e = Exception(f"code: {ret.code} " +
                                   f"msg: {ret.message or json.dumps(ret,indent=4,ensure_ascii=False)}")
-            logger.error(e)
+            if not (probe and probe.internal):
+                logger.error(e)
             raise e
+        if probe and ret.get("code") == 0:
+            probe.success(url)
         return ret
 
     def gologin(self, RAC_id):
@@ -788,6 +808,7 @@ class Fucker:
 
     def saveDatabaseIntervalTimeV2(self, RAC_id, video_id, played_time, last_submit, watch_point, token_id=None, initial=False):
         '''### save database interval time for zhidao'''
+        self.verification_video = {"course_id": RAC_id, "video_id": video_id, "played_time": played_time}
         record_url = "https://studyservice-api.zhihuishu.com/gateway/t/v1/learning/saveDatabaseIntervalTimeV2"
         ctx = self.getZhidaoContext(RAC_id)
         recruit_id = ctx.course.recruitId
@@ -1103,18 +1124,25 @@ class Fucker:
                     if type(data) == dict:
                         data = json.dumps(data)
                 r = self.session.post(
-                    url, data=data, proxies=self.proxies, timeout=10)
+                    url, data=data, proxies=self.proxies, timeout=10,
+                    allow_redirects=not getattr(getattr(self, "verification_probe", None), "replaying", False))
 
                 # set content-type back
                 self.session.headers.pop("Content-Type", None)
 
             case "GET":
                 r = self.session.get(
-                    url, params=data, proxies=self.proxies, timeout=10)
+                    url, params=data, proxies=self.proxies, timeout=10,
+                    allow_redirects=not getattr(getattr(self, "verification_probe", None), "replaying", False))
             case _:
                 e = ValueError(f"Unsupport method: {method}")
                 logger.error(e)
                 raise e
+        probe = getattr(self, "verification_probe", None)
+        if probe and probe.replaying:
+            probe.replay_http_status = r.status_code
+            if not 200 <= r.status_code < 300:
+                raise RuntimeError("验证实验收到非成功 HTTP 响应，结果记为未知。")
         ret = ObjDict(r.json())
         logger.debug(json.dumps(ret, indent=4, ensure_ascii=False))
         return ret
