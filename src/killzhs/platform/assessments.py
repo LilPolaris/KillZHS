@@ -149,6 +149,15 @@ def parse_answer(value, question):
     return [opt["id"] for opt in question["options"] if opt["id"] in ids]
 
 
+def result_code(value):
+    """Accept the integer and canonical string codes compared loosely by the page."""
+    if type(value) is int:
+        return value
+    if isinstance(value, str) and re.fullmatch(r"-?(?:0|[1-9][0-9]{0,8})", value):
+        return int(value)
+    return None
+
+
 class SharedAssessments:
     def __init__(self, client, control, ai, directory, *, budget, emit, log):
         self.client, self.control, self.ai = client, control, ai
@@ -312,12 +321,46 @@ class SharedAssessments:
         temporary.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
         temporary.replace(path)
 
+    def cached_answers(self, prior, row, questions, question_hash):
+        if not prior or prior.get("state") != "answers_ready":
+            return None
+        message = "本地已生成答案与当前试卷不一致，已停止，未重新请求模型或交卷。请先到官网核对。"
+        cached = prior.get("answers")
+        if (not isinstance(cached, list) or len(cached) != len(questions)
+                or prior.get("questions_hash", question_hash) != question_hash):
+            raise AssessmentError(message)
+        indexed = {}
+        context = {"examId": row["exam_id"], "recruitId": self.recruit,
+                   "stuExamId": row["id"], "schoolId": self.school}
+        for entry in cached:
+            if (not isinstance(entry, dict) or not isinstance(entry.get("eid"), str)
+                    or entry["eid"] in indexed or any(entry.get(k) != v for k, v in context.items())):
+                raise AssessmentError(message)
+            indexed[entry["eid"]] = entry
+        answers = []
+        for question in questions:
+            entry = indexed.get(question["id"])
+            if (entry is None or type(entry.get("questionType")) is not int
+                    or entry["questionType"] != question["type"] or not isinstance(entry.get("answer"), str)):
+                raise AssessmentError(message)
+            try:
+                answers.append(parse_answer(json.dumps({"option_ids": entry["answer"].split(",")}), question))
+            except AssessmentError as error:
+                raise AssessmentError(message) from error
+        return answers
+
     def run(self, row):
         self.exam_deadline = None
         self.control.check()
         path = self.directory / (hashlib.sha256(item_key(row).encode()).hexdigest() + ".json")
+        prior = None
         if path.exists():
-            prior = json.loads(path.read_text(encoding="utf-8"))
+            try:
+                prior = json.loads(path.read_text(encoding="utf-8"))
+                if not isinstance(prior, dict):
+                    raise ValueError("Invalid journal")
+            except (ValueError, OSError) as error:
+                raise AssessmentError("本地答题记录无法读取，已停止，请先核对官网状态；不会自动覆盖记录或交卷。") from error
             if prior.get("state") in ("submitting", "unknown", "submitted"):
                 raise AssessmentError("这份试卷已有交卷记录或交卷结果待确认，请先到官网核对；不会重复自动交卷。")
         # Opening a paper may consume an attempt or begin its timer. Only run() does this.
@@ -338,7 +381,9 @@ class SharedAssessments:
                 "studentExamId": row["id"], "schoolId": self.school, "courseId": self.course_id}
         if row["kind"] == "exam":
             base["deviceId"] = ""
-        self.journal(row, "opening")
+        # Keep recoverable answers intact while reopening / validating the paper.
+        if not prior or prior.get("state") != "answers_ready":
+            self.journal(row, "opening")
         opened = self.query("student/doHomework" if row["kind"] == "chapter" else "student/doExam", base, kind=row["kind"])
         if not isinstance(opened, dict) or opened.get("state") in (3, 4):
             raise AssessmentError("试卷已提交或不允许继续作答，未填写或交卷。")
@@ -348,26 +393,38 @@ class SharedAssessments:
                 self.exam_deadline = datetime.fromisoformat(opened["examEndTime"]).timestamp()
             except (TypeError, ValueError) as error:
                 raise AssessmentError("无法识别试卷答题截止时间，未自动交卷。") from error
-        if len(questions) > self.remaining_requests():
+        question_hash = hashlib.sha256(json.dumps(questions, ensure_ascii=True, sort_keys=True).encode()).hexdigest()
+        cached = self.cached_answers(prior, row, questions, question_hash)
+        if cached is None and len(questions) > self.remaining_requests():
             raise AssessmentError("剩余 AI 请求上限不足以完成整份试卷，未生成或提交答案；请调整上限后重新开始。")
+        if cached is not None:
+            self.log(f"{row['name']} · 复用本机已生成的 {len(cached)} 题答案，已核对题目编号、题型和选项，不再请求模型。")
         # Generate the whole paper before writing any answer; never submit an incomplete sheet.
         answers = []
         for index, question in enumerate(questions):
             self.control.check()
-            ids = self.answer(question)
+            ids = cached[index] if cached is not None else self.answer(question)
             answers.append({"examId": row["exam_id"], "recruitId": self.recruit,
                 "stuExamId": row["id"], "eid": question["id"], "answer": ",".join(ids),
                 "schoolId": self.school, "deviceId": "", "examType": "", "fromType": 3,
                 "dataIds": "", "questionType": question["type"]})
             self.emit("progress", value=round((index + 1) / len(questions) * 100, 1),
-                      title=f"{row['name']} · 已生成 {index + 1}/{len(questions)} 题", phase="assessment")
-        self.journal(row, "answers_ready", answers=answers)
+                      title=f"{row['name']} · 已{'复用' if cached is not None else '生成'} {index + 1}/{len(questions)} 题", phase="assessment")
+        self.journal(row, "answers_ready", answers=answers, questions_hash=question_hash)
         for index, answer in enumerate(answers):
             saved = self.query("answer/saveStudentAnswer", {"recruitId": self.recruit,
                 "stuExamAnswer": json.dumps([answer], ensure_ascii=True)})
-            if not isinstance(saved, dict) or saved.get("statu") != 1:
-                reason = "verification" if isinstance(saved, dict) and saved.get("statu") == -10 else None
-                raise AssessmentError("平台未确认答案保存成功，已停止，未交卷。", reason)
+            code = result_code(saved.get("statu")) if isinstance(saved, dict) else None
+            if code != 1:
+                self.journal(row, "answers_ready", answers=answers, questions_hash=question_hash,
+                             save_failure={"question_number": index + 1, "code": code,
+                                           "response_type": type(saved).__name__})
+                if code == -10:
+                    raise AssessmentError("平台要求答题验证，请到官网完成验证后再试；已保留生成的答案，未交卷。", "verification")
+                if code == -20:
+                    raise AssessmentError("平台暂时禁止继续答题（返回码 -20），请到官网处理；已保留生成的答案，未交卷。")
+                detail = str(code) if code is not None else "缺失或格式不支持"
+                raise AssessmentError(f"平台未确认答案保存成功（第 {index + 1} 题，返回码：{detail}），已停止，未交卷。")
             self.log(f"{row['name']} · 平台已接收 {index + 1}/{len(answers)} 题。")
         # Read back option IDs before submission. A saved-request success is insufficient.
         readback = self.query("answer/getStuAnswerInfoNew" if row["kind"] == "chapter" else "answer/getStuAnswerInfo",
@@ -382,11 +439,12 @@ class SharedAssessments:
         # Never retry this call, including after process crashes or an unknown HTTP response.
         result = self.query("answer/submit", {"recruitId": self.recruit, "examId": row["exam_id"],
                             "stuExamId": row["id"], "achieveCount": len(answers)}, kind=row["kind"])
-        if not isinstance(result, dict) or result.get("statu") not in (0, 1):
+        code = result_code(result.get("statu")) if isinstance(result, dict) else None
+        if code not in (0, 1):
             self.journal(row, "unknown")
             raise AssessmentError("交卷结果待确认，请到官网核对；不会自动重复交卷。")
         self.journal(row, "submitted")
         score = result.get("score")
         return {"key": item_key(row), "state": "submitted", "answered": len(answers),
                 "score": score if type(score) in (int, float) else None,
-                "message": "平台已确认交卷。" + ("成绩需等待平台批阅。" if result["statu"] == 1 else "")}
+                "message": "平台已确认交卷。" + ("成绩需等待平台批阅。" if code == 1 else "")}
