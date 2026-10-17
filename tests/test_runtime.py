@@ -211,6 +211,23 @@ class VideoLoopsTest(unittest.TestCase):
                 client.fuckAiVideo(1, 2, 3, 4)
         client.reportAiVideoProcess.assert_called_once()
 
+    def test_hike_fractional_threshold_does_not_repeat_integer_progress(self):
+        client = self.client()
+        client.end_thre = .91
+        client.getHikeContext = lambda _: ObjDict({"fucked_time": 0})
+        client.stuViewFile = lambda *args: ObjDict({"dataId": 1, "totalTime": 7})
+        submitted = []
+        def report(*args):
+            submitted.append(args[2])
+            if len(submitted) > 1:
+                raise AssertionError("Fractional target caused repeated progress submission")
+            return int(args[2])
+        client.saveStuStudyRecord = report
+        with patch.object(self.legacy, "time", types.SimpleNamespace(sleep=lambda _: None, time=lambda: 100)), \
+                patch.object(self.legacy, "progressBar", lambda *args, **kwargs: None):
+            client.fuckHikeVideo("course", "video")
+        self.assertEqual(submitted, [7])
+
     def test_ppt_remote_delete_runs_when_extraction_unwinds_on_stop(self):
         converter = object.__new__(self.legacy.PptToTxt)
         converter._PptToTxt__delete_immediately = True

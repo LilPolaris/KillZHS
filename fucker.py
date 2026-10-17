@@ -939,7 +939,8 @@ class Fucker:
         start_date = int(time.time()*1000)
         speed = self.speed or 1.25 # default speed for Hike is 1.25
         interval = 30              # interval between 2 progess reports
-        end_time = max(total_time*self.end_thre, 1.0)
+        # The API reports integer seconds; a fractional target can never be confirmed.
+        end_time = max(math.ceil(total_time*self.end_thre), 1)
         played_time = prev_time    # total video played time
 
         def flush_progress():
