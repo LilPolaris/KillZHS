@@ -68,7 +68,7 @@ class ExamCtx:
                 json.dump({}, f)
 
         return answerpath
-    
+
     def getAllAnswerpath(self): # 同课程所有题目的答案
         answerpath = getRealPath(
             f"aiexamAnswer/{self.courseId}/data.json")
@@ -95,7 +95,7 @@ class ExamCtx:
             with open(file_path, "r", encoding="utf-8") as f:
                 cache = json.load(f)
                 Allcache.update(cache)
-        
+
         self.allAnswerCache = {}
         for key, value in Allcache.items():
             if '_' in key:
@@ -480,4 +480,3 @@ class ExamCtx:
             logger.info(
                 f"Exam {self.examTestId} is not finished, score: {correct_questions}/{total_questions}")
             return False, correct_questions, total_questions
-

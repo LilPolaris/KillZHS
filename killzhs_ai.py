@@ -260,7 +260,7 @@ class Openai:
 
 class PptToTxt:
     def __init__(self, moonShotKey,baseUrl="https://api.moonshot.cn/v1", max_file_size_mb=100, max_cache_files=500, max_cache_size_gb=8, delete_immediately=False):
-        self.__moonShotKey = moonShotKey 
+        self.__moonShotKey = moonShotKey
         self.__session = requests.Session()
         self.__download_path = getRealPath("AiDownloadCache")
         self.__client = OpenAI(
@@ -378,4 +378,3 @@ class PptToTxt:
             self.__deleteFile(oldest_file[1]['id'])
             total_size -= oldest_file[1]['size']
             total_files -= 1
-
