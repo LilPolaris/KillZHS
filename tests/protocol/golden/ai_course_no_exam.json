@@ -1,0 +1,498 @@
+{
+ "seed": 0,
+ "outcome": {
+  "raised": null
+ },
+ "results": [
+  null
+ ],
+ "logs": [],
+ "unhandled": [],
+ "requests": [
+  {
+   "method": "POST",
+   "url": "https://kg-ai-run.zhihuishu.com/run/gateway/t/stu/knowledge-study/course-basic",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "175",
+    "content-type": "application/json;charset=UTF-8",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "json": {
+     "secretStr": "bfUzncuFV1pO86kOBhXsGOXEW57U1znczIj4vDeLbKUpC/OpHxJh4aPtDoBHWXSHGs2m8edcJ98N2KaKh3SxH49SQmOPpsokI91krvCVgdxcqPJf1JTVZWLAbDILbn92",
+     "dateFormate": 1760000000000
+    }
+   },
+   "secret": {
+    "key": "ai",
+    "plain": "{\"courseId\": 1839576198548688896, \"classId\": 4239, \"dateFormate\": 1760000000000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://kg-ai-run.zhihuishu.com/run/gateway/t/stu/resources/list-knowledge-resource",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "199",
+    "content-type": "application/json;charset=UTF-8",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "json": {
+     "secretStr": "bfUzncuFV1pO86kOBhXsGOXEW57U1znczIj4vDeLbKUpC/OpHxJh4aPtDoBHWXSHEpWYARDoMvprz1SPrgAelSRkAk1e6QBT0oQyd8WEePJBtDMuPnbS6Zu5WEdCdNnDcQGQ3iJdMahbI1vE/gpAHw==",
+     "dateFormate": 1760000000000
+    }
+   },
+   "secret": {
+    "key": "ai",
+    "plain": "{\"courseId\": 1839576198548688896, \"classId\": 4239, \"knowledgeId\": 41, \"dateFormate\": 1760000000000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://kg-ai-run.zhihuishu.com/run/gateway/t/stu/studyRecord/completed",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "239",
+    "content-type": "application/json;charset=UTF-8",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "json": {
+     "secretStr": "bfUzncuFV1pO86kOBhXsGOXEW57U1znczIj4vDeLbKUpC/OpHxJh4aPtDoBHWXSHEpWYARDoMvprz1SPrgAelcTNYRhyRE1ANFdcjbQ/V/oD2LStypFyRYTu/LDOW2uP0SceO4DhISlOqIiGCYmQLe1MiKig18dSLUAP+/nsMFhHRb+/XpHkY70nQ5J9w6/W",
+     "dateFormate": 1760000001000
+    }
+   },
+   "secret": {
+    "key": "ai",
+    "plain": "{\"courseId\": 1839576198548688896, \"classId\": 4239, \"knowledgeId\": 41, \"resourcesUid\": 501, \"watchUId\": 1, \"dateFormate\": 1760000001000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://kg-ai-run.zhihuishu.com/run/gateway/t/stu/studyRecord/completed",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "239",
+    "content-type": "application/json;charset=UTF-8",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "json": {
+     "secretStr": "bfUzncuFV1pO86kOBhXsGOXEW57U1znczIj4vDeLbKUpC/OpHxJh4aPtDoBHWXSHEpWYARDoMvprz1SPrgAelcTNYRhyRE1ANFdcjbQ/V/pveTstX2ZvetprL1PgctKvJ/jnpSPBl+kmU5PD7fVMlWWa+S39BwU/qdNzp3Soptywdxn+PBapOeTy1gXOT2Ov",
+     "dateFormate": 1760000002000
+    }
+   },
+   "secret": {
+    "key": "ai",
+    "plain": "{\"courseId\": 1839576198548688896, \"classId\": 4239, \"knowledgeId\": 41, \"resourcesUid\": 502, \"watchUId\": 1, \"dateFormate\": 1760000002000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://kg-ai-run.zhihuishu.com/run/gateway/t/stu/resources-lab/get-video-time",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "199",
+    "content-type": "application/json;charset=UTF-8",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "json": {
+     "secretStr": "bfUzncuFV1pO86kOBhXsGOXEW57U1znczIj4vDeLbKUpC/OpHxJh4aPtDoBHWXSHQ1MjAyhkR1aVc9Zy65LOI5cGiPdZr3ZpjDdq4ZmHZchGiSOUw0pHehWhgwKrmcqSIn3aP/hcWKE0DEBRv0lj7g==",
+     "dateFormate": 1760000003000
+    }
+   },
+   "secret": {
+    "key": "ai",
+    "plain": "{\"courseId\": 1839576198548688896, \"classId\": 4239, \"videoIdList\": [9001], \"dateFormate\": 1760000003000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://kg-ai-run.zhihuishu.com/run/gateway/t/stu/studyRecord/report",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "347",
+    "content-type": "application/json;charset=UTF-8",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "json": {
+     "secretStr": "bfUzncuFV1pO86kOBhXsGOXEW57U1znczIj4vDeLbKUpC/OpHxJh4aPtDoBHWXSHPcx4fqpseCNgvr792YmmZme6Ny1S1EnVv0G9tjsAc8IQo2heLjloUj6znTMcIfcI6W0un25CmS4qCuxJ0Q6ju6JsmMRGB8IBCLxsJkIMnIXXmSV4DAcZjwn5csb5o1ZBz3ex1ZsBCTJjMgRhkR4hUSaczleGtS6u9/HYMrMBXTezldp9fY8s/MrkAHFI0bFat2zpivcyZlyRTsY+s75az0sFMwmxuWpA71Ui5fet3K8=",
+     "dateFormate": 1760000003000
+    }
+   },
+   "secret": {
+    "key": "ai",
+    "plain": "{\"courseId\": 1839576198548688896, \"classId\": 4239, \"fileId\": 9001, \"knowledgeId\": 41, \"lastWatchTime\": 3, \"studyTotalTime\": 10, \"shareCourseId\": \"\", \"nodeType\": 0, \"watchUId\": 1, \"dateFormate\": 1760000003000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://kg-ai-run.zhihuishu.com/run/gateway/t/stu/studyRecord/report",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "347",
+    "content-type": "application/json;charset=UTF-8",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "json": {
+     "secretStr": "bfUzncuFV1pO86kOBhXsGOXEW57U1znczIj4vDeLbKUpC/OpHxJh4aPtDoBHWXSHPcx4fqpseCNgvr792YmmZme6Ny1S1EnVv0G9tjsAc8IQo2heLjloUj6znTMcIfcIutWMZX9WueCjFJEZlhEpyz09hgvt8Epnl2+R1sfg50N8bs8QdmnltqGueLrRKrGF3mXPu9P2PKggZhTVK7906YSL1ZDRIt4xD3txyK/hQi2e4SguBItcWpvtvco1P7NpRjkvlyVVksRsMlw3+1MSZ+Aym4fCfRvxRxxDgn5XeY0=",
+     "dateFormate": 1760000005000
+    }
+   },
+   "secret": {
+    "key": "ai",
+    "plain": "{\"courseId\": 1839576198548688896, \"classId\": 4239, \"fileId\": 9001, \"knowledgeId\": 41, \"lastWatchTime\": 6, \"studyTotalTime\": 10, \"shareCourseId\": \"\", \"nodeType\": 0, \"watchUId\": 1, \"dateFormate\": 1760000005000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://kg-ai-run.zhihuishu.com/run/gateway/t/stu/studyRecord/report",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "347",
+    "content-type": "application/json;charset=UTF-8",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "json": {
+     "secretStr": "bfUzncuFV1pO86kOBhXsGOXEW57U1znczIj4vDeLbKUpC/OpHxJh4aPtDoBHWXSHPcx4fqpseCNgvr792YmmZme6Ny1S1EnVv0G9tjsAc8IQo2heLjloUj6znTMcIfcIXMxXwF67/P65H5TMwnTBoRxcfcvnvlJaH0j6T1u4O4w9PD1frZ0Dn0Y8NMsORQ8TsnY+fYbB/MtXUuI3R/hZ5CrugegRIHISbQbfcfYqiJ7tjrdqMLQHTu3cRALGfwa84BMo9j8bTvJny2+85JI4qOumGd+6hQnGRcNtzK5P0LY=",
+     "dateFormate": 1760000007000
+    }
+   },
+   "secret": {
+    "key": "ai",
+    "plain": "{\"courseId\": 1839576198548688896, \"classId\": 4239, \"fileId\": 9001, \"knowledgeId\": 41, \"lastWatchTime\": 9, \"studyTotalTime\": 10, \"shareCourseId\": \"\", \"nodeType\": 0, \"watchUId\": 1, \"dateFormate\": 1760000007000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://kg-ai-run.zhihuishu.com/run/gateway/t/stu/studyRecord/report",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "347",
+    "content-type": "application/json;charset=UTF-8",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "json": {
+     "secretStr": "bfUzncuFV1pO86kOBhXsGOXEW57U1znczIj4vDeLbKUpC/OpHxJh4aPtDoBHWXSHPcx4fqpseCNgvr792YmmZme6Ny1S1EnVv0G9tjsAc8IQo2heLjloUj6znTMcIfcIwTyA1iygKB7ptCs/tgAIaWympr7njLpH6KFg9F6scp3vbWMnnYaOHNCy4hpkkeVoTms8uG+tfmhz8pHg9Pkn90b6v4HTnDWRgGXI/HWjzclS3QD8FhqMQ8/k1Tk7lNJpFwiyAzcr6FrGbmsbqdnEiPfpN+QktAVRtvbRvE+crcw=",
+     "dateFormate": 1760000009000
+    }
+   },
+   "secret": {
+    "key": "ai",
+    "plain": "{\"courseId\": 1839576198548688896, \"classId\": 4239, \"fileId\": 9001, \"knowledgeId\": 41, \"lastWatchTime\": 12, \"studyTotalTime\": 10, \"shareCourseId\": \"\", \"nodeType\": 0, \"watchUId\": 1, \"dateFormate\": 1760000009000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://kg-ai-run.zhihuishu.com/run/gateway/t/stu/resources-lab/get-video-time",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "199",
+    "content-type": "application/json;charset=UTF-8",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "json": {
+     "secretStr": "bfUzncuFV1pO86kOBhXsGOXEW57U1znczIj4vDeLbKUpC/OpHxJh4aPtDoBHWXSHQ1MjAyhkR1aVc9Zy65LOI7W+OOCNNb7g4P4EeT2FEcySciHlXesMXocIi7oJLjOmh8WxUJSAn/Yn03kGzUP1Pw==",
+     "dateFormate": 1760000012000
+    }
+   },
+   "secret": {
+    "key": "ai",
+    "plain": "{\"courseId\": 1839576198548688896, \"classId\": 4239, \"videoIdList\": [9002], \"dateFormate\": 1760000012000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://kg-ai-run.zhihuishu.com/run/gateway/t/stu/studyRecord/report",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "347",
+    "content-type": "application/json;charset=UTF-8",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "json": {
+     "secretStr": "bfUzncuFV1pO86kOBhXsGOXEW57U1znczIj4vDeLbKUpC/OpHxJh4aPtDoBHWXSHPcx4fqpseCNgvr792YmmZkbhNSpZIdw3wkUjgLrOP2WyV9Ld2o3WLgYnuLYwke7f6nkjIckzWVDCadh+GzADsu0jrPwyxYD0pvlWhfNUjZMC2LbSvUbDuH5OVUk4Z+dEv9CBVQ/tI7sAKcMkolkYxzWvZKtd4t8jU+qVGVmI722s7BSe+aDsXzNJc8+h25ADFBTvfdpJLq4BRIVHl0zNSfHHcBmP0VKgUCnFqq9YO+k=",
+     "dateFormate": 1760000012000
+    }
+   },
+   "secret": {
+    "key": "ai",
+    "plain": "{\"courseId\": 1839576198548688896, \"classId\": 4239, \"fileId\": 9002, \"knowledgeId\": 41, \"lastWatchTime\": 3, \"studyTotalTime\": 10, \"shareCourseId\": \"\", \"nodeType\": 0, \"watchUId\": 1, \"dateFormate\": 1760000012000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://kg-ai-run.zhihuishu.com/run/gateway/t/stu/studyRecord/report",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "347",
+    "content-type": "application/json;charset=UTF-8",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "json": {
+     "secretStr": "bfUzncuFV1pO86kOBhXsGOXEW57U1znczIj4vDeLbKUpC/OpHxJh4aPtDoBHWXSHPcx4fqpseCNgvr792YmmZkbhNSpZIdw3wkUjgLrOP2WyV9Ld2o3WLgYnuLYwke7fE8XM74whPrqicv06AT/Db+mzMIaPRGl9quaOqjjcHyGTrHUI6bDCgh/mCkPlyBqNga1ifOTXi+sIgpDiGfKqKiWJbtdTFiBdhPDjnsljcd3Frs9051/TOt2Mg19Bo1nql+7SR12sJMP7gS5a3glODsl9Y9rzq4lgO+xZ0aYQPYM=",
+     "dateFormate": 1760000014000
+    }
+   },
+   "secret": {
+    "key": "ai",
+    "plain": "{\"courseId\": 1839576198548688896, \"classId\": 4239, \"fileId\": 9002, \"knowledgeId\": 41, \"lastWatchTime\": 6, \"studyTotalTime\": 10, \"shareCourseId\": \"\", \"nodeType\": 0, \"watchUId\": 1, \"dateFormate\": 1760000014000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://kg-ai-run.zhihuishu.com/run/gateway/t/stu/studyRecord/report",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "347",
+    "content-type": "application/json;charset=UTF-8",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "json": {
+     "secretStr": "bfUzncuFV1pO86kOBhXsGOXEW57U1znczIj4vDeLbKUpC/OpHxJh4aPtDoBHWXSHPcx4fqpseCNgvr792YmmZkbhNSpZIdw3wkUjgLrOP2WyV9Ld2o3WLgYnuLYwke7fWR0Wxvw9qWEP7a51qQi5VMqwUo0/WjY6qNT5+e09FppEebAkcO5i3/d3X1p58s5kmhSGaZ45gBXPoCIV4u4sgmtO/3ZS0m3kikf5cKVTBBo+IptyQ4fjW9H7OJPK65fk6Ryc/MPVBIgfDSkkwbOojEeacVZwtuAlOsdD3cZNM+M=",
+     "dateFormate": 1760000016000
+    }
+   },
+   "secret": {
+    "key": "ai",
+    "plain": "{\"courseId\": 1839576198548688896, \"classId\": 4239, \"fileId\": 9002, \"knowledgeId\": 41, \"lastWatchTime\": 7, \"studyTotalTime\": 10, \"shareCourseId\": \"\", \"nodeType\": 0, \"watchUId\": 1, \"dateFormate\": 1760000016000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://kg-ai-run.zhihuishu.com/run/gateway/t/stu/studyRecord/completed",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "239",
+    "content-type": "application/json;charset=UTF-8",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "json": {
+     "secretStr": "bfUzncuFV1pO86kOBhXsGOXEW57U1znczIj4vDeLbKUpC/OpHxJh4aPtDoBHWXSHEpWYARDoMvprz1SPrgAelcTNYRhyRE1ANFdcjbQ/V/r4OEVvSaQs61zTxGwopDtwPeyArmFm1Rj9evb8W8URcxE1MdG6Ro3FQ1tfLKqBp2BPPx2ldSg1wOKF+VNzEG8T",
+     "dateFormate": 1760000019000
+    }
+   },
+   "secret": {
+    "key": "ai",
+    "plain": "{\"courseId\": 1839576198548688896, \"classId\": 4239, \"knowledgeId\": 41, \"resourcesUid\": 505, \"watchUId\": 1, \"dateFormate\": 1760000019000}"
+   }
+  }
+ ],
+ "background": {
+  "counts": {
+   "{\"method\": \"GET\", \"query\": [[\"jsonpCallBack\", \"result\"], [\"videoID\", \"9001\"]], \"url\": \"https://newbase.zhihuishu.com/video/initVideo\"}": 1,
+   "{\"method\": \"GET\", \"query\": [[\"jsonpCallBack\", \"result\"], [\"videoID\", \"9002\"]], \"url\": \"https://newbase.zhihuishu.com/video/initVideo\"}": 1,
+   "{\"method\": \"GET\", \"query\": [], \"url\": \"https://video.example/9001.mp4\"}": 1,
+   "{\"method\": \"GET\", \"query\": [], \"url\": \"https://video.example/9002.mp4\"}": 1
+  },
+  "heartbeat": []
+ }
+}

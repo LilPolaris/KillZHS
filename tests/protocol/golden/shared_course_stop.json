@@ -1,0 +1,798 @@
+{
+ "seed": 0,
+ "outcome": {
+  "raised": "TaskStopped",
+  "reason": "limited",
+  "message": "limited"
+ },
+ "results": [],
+ "logs": [],
+ "unhandled": [],
+ "requests": [
+  {
+   "method": "GET",
+   "url": "https://studyservice-api.zhihuishu.com/login/gologin",
+   "query": [
+    [
+     "fromurl",
+     "https://studyh5.zhihuishu.com/videoStudy.html#/studyVideo?recruitAndCourseId=a1b2c3d4e5"
+    ]
+   ],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "origin": "https://studyh5.zhihuishu.com",
+    "referer": "https://studyh5.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": null
+  },
+  {
+   "method": "POST",
+   "url": "https://studyservice-api.zhihuishu.com/gateway/t/v1/learning/queryCourse",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "150",
+    "content-type": "application/x-www-form-urlencoded",
+    "origin": "https://studyh5.zhihuishu.com",
+    "referer": "https://studyh5.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "form": [
+     [
+      "secretStr",
+      "QhSgx0MEvvp0jRL20aaxWq1aXygpNHZsYto6UNl6njUHcAqrXBgOvUuP7+oEN9axtmzj5YXY2iteF/SBy3IzT868cQbb9g9YfphHop4ApNo="
+     ],
+     [
+      "dateFormate",
+      "1760000000000"
+     ]
+    ]
+   },
+   "secret": {
+    "key": "video",
+    "plain": "{\"recruitAndCourseId\": \"a1b2c3d4e5\", \"dateFormate\": 1760000000000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://studyservice-api.zhihuishu.com/gateway/t/v1/learning/videolist",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "150",
+    "content-type": "application/x-www-form-urlencoded",
+    "origin": "https://studyh5.zhihuishu.com",
+    "referer": "https://studyh5.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "form": [
+     [
+      "secretStr",
+      "QhSgx0MEvvp0jRL20aaxWq1aXygpNHZsYto6UNl6njUHcAqrXBgOvUuP7+oEN9axtmzj5YXY2iteF/SBy3IzT868cQbb9g9YfphHop4ApNo="
+     ],
+     [
+      "dateFormate",
+      "1760000000000"
+     ]
+    ]
+   },
+   "secret": {
+    "key": "video",
+    "plain": "{\"recruitAndCourseId\": \"a1b2c3d4e5\", \"dateFormate\": 1760000000000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://studyservice-api.zhihuishu.com/gateway/t/v1/learning/queryStuyInfo",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "202",
+    "content-type": "application/x-www-form-urlencoded",
+    "origin": "https://studyh5.zhihuishu.com",
+    "referer": "https://studyh5.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "form": [
+     [
+      "secretStr",
+      "lW85QI5WnQq0u9Q+opsIMxnjhI48bvJNLkx+jdopTJQyvw/OaiZFfA8GmD9MtFTUqJIIAjOYGsHcoLkhOGDC/kuhn0ZDAzR5BJyLI1b5hh96LTcO439Y02UJeRzRGcZKbEeDfDgA4NvZsB+bC0NuHg=="
+     ],
+     [
+      "dateFormate",
+      "1760000000000"
+     ]
+    ]
+   },
+   "secret": {
+    "key": "video",
+    "plain": "{\"lessonIds\": [101, 102, 103], \"lessonVideoIds\": [1021, 1022], \"recruitId\": 9001, \"dateFormate\": 1760000000000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://studyservice-api.zhihuishu.com/gateway/t/v1/learning/queryUserRecruitIdLastVideoId",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "132",
+    "content-type": "application/x-www-form-urlencoded",
+    "origin": "https://studyh5.zhihuishu.com",
+    "referer": "https://studyh5.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "form": [
+     [
+      "secretStr",
+      "cD+tIVVAuf6BhQHW706eJJZfz+bUNANPqsNL2UWmxRgX6DZXgtf0DHGnH0BGzFL9vmEmZnfhAIrtpdeeAIGLbA=="
+     ],
+     [
+      "dateFormate",
+      "1760000000000"
+     ]
+    ]
+   },
+   "secret": {
+    "key": "video",
+    "plain": "{\"recruitId\": 9001, \"dateFormate\": 1760000000000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://studyservice-api.zhihuishu.com/gateway/t/v1/learning/prelearningNote",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "272",
+    "content-type": "application/x-www-form-urlencoded",
+    "origin": "https://studyh5.zhihuishu.com",
+    "referer": "https://studyh5.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "form": [
+     [
+      "secretStr",
+      "zm9EdizLcG869pTdCGWmNbjG44434JRZZp+tioQDnE7+s7OSnScREgpTfDQN/EguMBwDqztWQTlh2+CGO8uZ9eB/MvtzshfRxkyWwnFysI9bWz2/wlTA6fXWslT3p0Pz19Jyn2UYY2P5NuBaP4nXaph7UXeMwNWTIK9Z5e8rG+V+wrmJesX2GaIkxJrJHbFsPDkF8k5ziyw5poipDn8XYQ=="
+     ],
+     [
+      "dateFormate",
+      "1760000000000"
+     ]
+    ]
+   },
+   "secret": {
+    "key": "video",
+    "plain": "{\"ccCourseId\": 7001, \"chapterId\": 11, \"isApply\": 1, \"lessonId\": 101, \"lessonVideoId\": 0, \"recruitId\": 9001, \"videoId\": 5001, \"dateFormate\": 1760000000000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://studyservice-api.zhihuishu.com/gateway/t/v1/popupAnswer/loadVideoPointerInfo",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "206",
+    "content-type": "application/x-www-form-urlencoded",
+    "origin": "https://studyh5.zhihuishu.com",
+    "referer": "https://studyh5.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "form": [
+     [
+      "secretStr",
+      "JQ3Bf+BtU2ajLde6Ro4wdFpRBkr6vGr4CdDTy+HbSdm4z6WSxCvIoogG+Z4rBXyJ7jszB88lN/2p9O3mavOdoFrOU+0pM5/ZuWdfhSQW2LyaTMh5bjPhzPBQSBPh6pkZiLKfngJAN48wzc/vDEzWKw=="
+     ],
+     [
+      "dateFormate",
+      "1760000000000"
+     ]
+    ]
+   },
+   "secret": {
+    "key": "video",
+    "plain": "{\"lessonId\": 101, \"lessonVideoId\": 0, \"recruitId\": 9001, \"courseId\": 7001, \"dateFormate\": 1760000000000}"
+   }
+  },
+  {
+   "method": "GET",
+   "url": "https://studyservice-api.zhihuishu.com/gateway/t/v1/course/threeDimensionalCourseWare",
+   "query": [
+    [
+     "secretStr",
+     "XixkOBSRRCb48ZOClOn4+MqL10ZdX12C+REEon8/WTJPKdY1Tjzyi9j9B5LsjWN/"
+    ],
+    [
+     "dateFormate",
+     "1760000000000"
+    ]
+   ],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "origin": "https://studyh5.zhihuishu.com",
+    "referer": "https://studyh5.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": null,
+   "secret": {
+    "key": "video",
+    "plain": "{\"videoId\": 5001, \"dateFormate\": 1760000000000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://studyservice-api.zhihuishu.com/gateway/t/v1/learning/saveDatabaseIntervalTimeV2",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "398",
+    "content-type": "application/x-www-form-urlencoded",
+    "origin": "https://studyh5.zhihuishu.com",
+    "referer": "https://studyh5.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "form": [
+     [
+      "secretStr",
+      "79gCiLmdGOV1D9bAOKRWcSO952NTT8nXwTj6xyY2Su5aR8GMYH2DjOFroZPqqDnC7E0RkF4r1MuBWRNXg9RrciprFn4uplNxjlPOi7L8qejRqr0XJmo1Yii8Z97ZB8zkLov6fG6rNAsLFelSAhixRXT+w8AWqqpvUXtQpzp0wH3ikkWEy+yYRQfJU9pF3Cv5TP5SQCuU+wkKrghqgL0cvY/9kdwXmATlkKhDsytZdX1eoSCNbunmwnjxUbRysOcc8XtMOVgdeO2wB8CYlZfTg3ArlF++/3A4q6ErYNYbwDX7FEl7J8m0lKRIAwLv9nhmsjIen1KrHV9C0JTk66zZCA=="
+     ],
+     [
+      "dateFormate",
+      "1760000025000"
+     ]
+    ]
+   },
+   "secret": {
+    "key": "video",
+    "plain": "{\"ewssw\": \"0,1,2,2,2,3,3,3,3,4,4,4,5,5,5,6,6,6,6,7,7,7,8,8,8,9,9\", \"sdsew\": \"434a40454f5b544b41404f415a544b4141454f5a5f494c4b47425154404a404e475c5f2f5716151f0f494a4a40450e0217\", \"zwsds\": \"NzcwMDAx\", \"courseId\": 7101, \"dateFormate\": 1760000025000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://studyservice-api.zhihuishu.com/gateway/t/v1/learning/prelearningNote",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "276",
+    "content-type": "application/x-www-form-urlencoded",
+    "origin": "https://studyh5.zhihuishu.com",
+    "referer": "https://studyh5.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "form": [
+     [
+      "secretStr",
+      "zm9EdizLcG869pTdCGWmNbjG44434JRZZp+tioQDnE7+s7OSnScREgpTfDQN/EguMBwDqztWQTlh2+CGO8uZ9cEqzw0BQFaBibPjvwDJxhfxhqWF0KbBm0QCbgmIX7GkhIimREaZ5QVBSgroHGqq5w5xBK+YmJuPi+88tRIQ7dbsilvLtgnmKXw9a52/VtJ1K7gT/debsiq2dM+CNT+jeA=="
+     ],
+     [
+      "dateFormate",
+      "1760000026000"
+     ]
+    ]
+   },
+   "secret": {
+    "key": "video",
+    "plain": "{\"ccCourseId\": 7001, \"chapterId\": 11, \"isApply\": 1, \"lessonId\": 102, \"lessonVideoId\": 1021, \"recruitId\": 9001, \"videoId\": 5002, \"dateFormate\": 1760000026000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://studyservice-api.zhihuishu.com/gateway/t/v1/popupAnswer/loadVideoPointerInfo",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "198",
+    "content-type": "application/x-www-form-urlencoded",
+    "origin": "https://studyh5.zhihuishu.com",
+    "referer": "https://studyh5.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "form": [
+     [
+      "secretStr",
+      "YWOApUFnLvvf1FB4yCc2c0GEfi7KV1U3X4kUpjjew3id418Np4xsdnxQiADPuwmeUA4QYsDG9HzEb5xGU4B5LIsgKRdSRGEDW46u7MuiRNYsr0YWP017+fVGtbPUqyT5wwX/HG/I5zypRRKk6BPdhA=="
+     ],
+     [
+      "dateFormate",
+      "1760000026000"
+     ]
+    ]
+   },
+   "secret": {
+    "key": "video",
+    "plain": "{\"lessonId\": 102, \"lessonVideoId\": 1021, \"recruitId\": 9001, \"courseId\": 7001, \"dateFormate\": 1760000026000}"
+   }
+  },
+  {
+   "method": "GET",
+   "url": "https://studyservice-api.zhihuishu.com/gateway/t/v1/course/threeDimensionalCourseWare",
+   "query": [
+    [
+     "secretStr",
+     "L0FFT8SPI6LMpYyo70UUFoCJ0IM/9ZMC0KhzcvntStGkMERm+9v2KI6VnaVK23Va"
+    ],
+    [
+     "dateFormate",
+     "1760000026000"
+    ]
+   ],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "origin": "https://studyh5.zhihuishu.com",
+    "referer": "https://studyh5.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": null,
+   "secret": {
+    "key": "video",
+    "plain": "{\"videoId\": 5002, \"dateFormate\": 1760000026000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://studyservice-api.zhihuishu.com/gateway/t/v1/learning/saveDatabaseIntervalTimeV2",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "374",
+    "content-type": "application/x-www-form-urlencoded",
+    "origin": "https://studyh5.zhihuishu.com",
+    "referer": "https://studyh5.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "form": [
+     [
+      "secretStr",
+      "79gCiLmdGOV1D9bAOKRWcfHTM3tFxOSxoDZ/XVy/zV7YI7LwnvRT5jKduETdtnT/RBgeWG7G1E7X8dHc1QbkG0/yMUHrixH7IRgwhbGCJAZv6eaHncC+XcpbTUFB5mkEamPH8lHtVXSc3d4ySyuQ34pfGJR9j28eLJQEU2JuLqSJJABG0Q4Eqadj7cQPWSoUX8BlRUR3BQARmFU9iXUepS28TCRGztuEjGHlPLa0mzRoADaA2xvD1tE3DKQnG7cpZgabJUGipX++VjgfkTnuAWsRm/uSPKLbwvrmsjqiW+2CxRrLdmB4zsCKVdT9ygeM"
+     ],
+     [
+      "dateFormate",
+      "1760000038000"
+     ]
+    ]
+   },
+   "secret": {
+    "key": "video",
+    "plain": "{\"ewssw\": \"0,1,2,2,3,3,3,4,4,4,5,5,5,5,6,6,6,7,7,7\", \"sdsew\": \"434a40454f5b5448414144465b5f4f4a40464f5b55414a4b454351564d41404e445a5e484d4b21590c05111f5d44445a55001203\", \"zwsds\": \"NzcwMDAy\", \"courseId\": 7101, \"dateFormate\": 1760000038000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://studyservice-api.zhihuishu.com/gateway/t/v1/learning/prelearningNote",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "266",
+    "content-type": "application/x-www-form-urlencoded",
+    "origin": "https://studyh5.zhihuishu.com",
+    "referer": "https://studyh5.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "form": [
+     [
+      "secretStr",
+      "zm9EdizLcG869pTdCGWmNbjG44434JRZZp+tioQDnE6Xpcx7OBDAFY9sg43nOxqmz6yNIoX996i2Bsae3YcuKmz+EsgbZm1Gk9mYJQq7LIT89NvtnoVr6DEg+PzOA3tkBMl+hYmpX2MGrkPbQ8OiD6BYEuwYQcbtpvC1QsGztHt3u1N8v5enCwMMxq0qQSaCIGV5XGJjgDe7kN/KdmRgzw=="
+     ],
+     [
+      "dateFormate",
+      "1760000039000"
+     ]
+    ]
+   },
+   "secret": {
+    "key": "video",
+    "plain": "{\"ccCourseId\": 7001, \"chapterId\": 12, \"isApply\": 1, \"lessonId\": 103, \"lessonVideoId\": 0, \"recruitId\": 9001, \"videoId\": 5004, \"dateFormate\": 1760000039000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://studyservice-api.zhihuishu.com/gateway/t/v1/popupAnswer/loadVideoPointerInfo",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "194",
+    "content-type": "application/x-www-form-urlencoded",
+    "origin": "https://studyh5.zhihuishu.com",
+    "referer": "https://studyh5.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "form": [
+     [
+      "secretStr",
+      "q+YkEOQmuCafNWEpfKpVIUgItSlgQxGaQ1xHBpDW1h0mMJPL4ubVMNQudntvhrHBRemmiGpPTFC0a2rl1stXf2zFhnJQ47clxryWHLTiUUjauohnMX28jIBLiykU6T6dwNvXxp1wFuTHqKM3xlKo4A=="
+     ],
+     [
+      "dateFormate",
+      "1760000039000"
+     ]
+    ]
+   },
+   "secret": {
+    "key": "video",
+    "plain": "{\"lessonId\": 103, \"lessonVideoId\": 0, \"recruitId\": 9001, \"courseId\": 7001, \"dateFormate\": 1760000039000}"
+   }
+  },
+  {
+   "method": "GET",
+   "url": "https://studyservice-api.zhihuishu.com/gateway/t/v1/course/threeDimensionalCourseWare",
+   "query": [
+    [
+     "secretStr",
+     "5OPCrdjk+oLakQHYsvwDUbFZvRxF8A1Eb4BA37ZsukVrW22BYtCSXbzpD6agEjHZ"
+    ],
+    [
+     "dateFormate",
+     "1760000039000"
+    ]
+   ],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "origin": "https://studyh5.zhihuishu.com",
+    "referer": "https://studyh5.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": null,
+   "secret": {
+    "key": "video",
+    "plain": "{\"videoId\": 5004, \"dateFormate\": 1760000039000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://studyservice-api.zhihuishu.com/gateway/t/v1/learning/saveDatabaseIntervalTimeV2",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "364",
+    "content-type": "application/x-www-form-urlencoded",
+    "origin": "https://studyh5.zhihuishu.com",
+    "referer": "https://studyh5.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "form": [
+     [
+      "secretStr",
+      "79gCiLmdGOV1D9bAOKRWcaPkvm+++hgD/1r3MnXR22tgXAUHYYANtAZiMQ8xwNgNWvZgSoRlb5MyqIPB2/l1MsqAEx5ozWl9oqHuN60lVuIUgsAVZH7lHRo1gwRWMMGmHEta6j6wEvPxzMP/t1uF+HY4T28c6goy8zK+09YKFYxw7FE6L29W5v0nytAS0XNEyZ0g5EcPYnurOOhCJGTgIwws/HNpG1quwiNkXuyJ/VU47P4VGEZ8GHUjTE/GbwnuJ+cqXHLPuVfZWQ9jsaEy+Nf1etuMP3WmDlAX0KTTtNQ="
+     ],
+     [
+      "dateFormate",
+      "1760000041000"
+     ]
+    ]
+   },
+   "secret": {
+    "key": "video",
+    "plain": "{\"ewssw\": \"0,1,2,2,3,3,3,4,4\", \"sdsew\": \"434a40454f5b544941404f415a544e4141464f5a5f4a4141464f5a5e4a4a4a45465131571c111f1147544a4a410e1c19\", \"zwsds\": \"NzcwMDA0\", \"courseId\": 7101, \"dateFormate\": 1760000041000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://studyservice-api.zhihuishu.com/gateway/t/v1/learning/saveDatabaseIntervalTimeV2",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "370",
+    "content-type": "application/x-www-form-urlencoded",
+    "origin": "https://studyh5.zhihuishu.com",
+    "referer": "https://studyh5.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "form": [
+     [
+      "secretStr",
+      "1JTE65peQRiu5Q4nG1P1MDSkLcs/Hrx98DHAwAJNbnOJS2tYRAPdLsnOOxLQdrUhr81uQajJeUYmdNaOX2Yo7+SRYBlfR63vsQ8lu9EUjNNRaFwhlYWKJz5HpNgBiGE1q8O4wEVC/G9ozJDQS28mCJE1eHiPtYM2dcjuXRDondGwdlWFZfJjNh0UStPnUYMoN+mp5jrCIYecCffSvckHW4Bg8fvx5PJ3GF6P2yd3LwGuSThTR0ZrgSgKtiGxXRGB+TXww9RU34vevOY28xYNa3KDKy0UXU4u2yNTO8/1+g8Rts1CTh6hfI1alzuNEjLk"
+     ],
+     [
+      "dateFormate",
+      "1760000069000"
+     ]
+    ]
+   },
+   "secret": {
+    "key": "video",
+    "plain": "{\"ewssw\": \"0,1,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4\", \"sdsew\": \"434a40454f5b544941404f415a544e4141464f5a5f4a4141464f5a5e4a4a4a45465131571c111f1147544a4a410e1c19\", \"zwsds\": \"NzcwMDA0\", \"courseId\": 7101, \"dateFormate\": 1760000069000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://studyservice-api.zhihuishu.com/gateway/t/v1/learning/saveDatabaseIntervalTimeV2",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "368",
+    "content-type": "application/x-www-form-urlencoded",
+    "origin": "https://studyh5.zhihuishu.com",
+    "referer": "https://studyh5.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "form": [
+     [
+      "secretStr",
+      "1JTE65peQRiu5Q4nG1P1MDSkLcs/Hrx98DHAwAJNbnOxcsRXcYWQxhdGiKVF6/1CBKP1nTB1pL2AAaEu2Ixx61S24mg4cKKVcxsCfQ3H8A6F355r7LZSlECm8Hu98Lk3JnencauDtEDEdNp+DRk+CS5TKjfPKF8urgZjLvLvP8mh4mdrbDNM3FiN1jOuoFTH9cLoBjznLxyjVTEOW+Uj2Q0MjayXAoDLyYsRyUvqwL4wiq4TzMi3TI6qRqKXN47GmdISI3uC+JM8CF6apoaNYMbuPsBYhtLtPRXf7Pv4Tza5wlxb7U41BraVFObE4oFw"
+     ],
+     [
+      "dateFormate",
+      "1760000099000"
+     ]
+    ]
+   },
+   "secret": {
+    "key": "video",
+    "plain": "{\"ewssw\": \"0,1,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4\", \"sdsew\": \"434a40454f5b544941404f415a544e4141464f5a5f4a4141464f5a5e4a4a4a45465131571c111f1147544a4a410e1c19\", \"zwsds\": \"NzcwMDA0\", \"courseId\": 7101, \"dateFormate\": 1760000099000}"
+   }
+  }
+ ],
+ "background": {
+  "counts": {
+   "{\"method\": \"GET\", \"query\": [[\"jsonpCallBack\", \"result\"], [\"videoID\", \"5001\"]], \"url\": \"https://newbase.zhihuishu.com/video/initVideo\"}": 1,
+   "{\"method\": \"GET\", \"query\": [[\"jsonpCallBack\", \"result\"], [\"videoID\", \"5002\"]], \"url\": \"https://newbase.zhihuishu.com/video/initVideo\"}": 1,
+   "{\"method\": \"GET\", \"query\": [[\"jsonpCallBack\", \"result\"], [\"videoID\", \"5004\"]], \"url\": \"https://newbase.zhihuishu.com/video/initVideo\"}": 1,
+   "{\"method\": \"GET\", \"query\": [], \"url\": \"https://video.example/5001.mp4\"}": 1,
+   "{\"method\": \"GET\", \"query\": [], \"url\": \"https://video.example/5002.mp4\"}": 1,
+   "{\"method\": \"GET\", \"query\": [], \"url\": \"https://video.example/5004.mp4\"}": 1
+  },
+  "heartbeat": []
+ }
+}

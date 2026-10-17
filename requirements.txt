@@ -1,5 +1,5 @@
-Pillow>=8.1.1
-pycryptodome
 requests
+pycryptodome
+openai
 tiktoken
-OpenAI
+pydantic>=2

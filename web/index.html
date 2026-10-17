@@ -8,9 +8,7 @@
   <title>KillZHS · 学习工作台</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/styles.css">
-  <script src="/app.js" defer></script>
-  <script src="/features.js" defer></script>
-  <script src="/assessments.js" defer></script>
+  <script type="module" src="/js/main.js"></script>
 </head>
 <body>
   <a class="skip" href="#main">跳到主要内容</a>
@@ -82,9 +80,104 @@
 
       <section id="view-settings" class="view" hidden><div class="page-heading"><div><div class="eyebrow">MAKE YOURSELF AT HOME</div><h1>按你的习惯来<span class="heading-dot">。</span></h1><p>设置保存在本机，下一次任务启动时生效。</p></div></div><section class="panel settings-panel"><div class="panel-heading"><div><h2>学习偏好</h2><p>原项目的 config.json 保持原样。</p></div><span class="stat-icon sage" data-icon="sliders"></span></div><form id="settings-form"><div class="setting-row"><div><label for="setting-speed">播放倍速</label><p>留空使用脚本默认：共享课及 AI 视频 1.5，校内课 1.25。可填写 0.1–16 倍，不保证平台接受。</p></div><div class="input-suffix"><input id="setting-speed" data-setting="speed" type="number" min="0.1" max="16" step="0.1" placeholder="脚本默认"><span>×</span></div></div><div class="setting-row"><div><label for="setting-limit">单门课程时限</label><p>达到时限后结束该门课程的本次运行；0 为不限制。</p></div><div class="input-suffix"><input id="setting-limit" data-setting="limit" type="number" min="0" max="1440" step="1" value="0"><span>分钟</span></div></div><div class="setting-row"><div><label for="setting-budget">本次总时长</label><p>整批任务共同使用，按实际经过时间计时；0 为不限时。</p></div><div class="input-suffix"><input id="setting-budget" data-setting="budget_minutes" type="number" min="0" max="240" step="1" value="0"><span>分钟</span></div></div><div class="setting-row"><div><label for="setting-threshold">完成阈值</label><p>原脚本按此比例判断视频是否可跳过，默认 0.91。</p></div><input id="setting-threshold" data-setting="threshold" type="number" min="0.1" max="2" step="0.01" value="0.91"></div><div class="setting-row"><div><label for="setting-remember">记住登录状态</label><p>供下次启动复用；关闭后登录仅保留到服务退出。</p></div><input id="setting-remember" data-setting="remember" type="checkbox" checked></div><div class="settings-actions"><button type="button" class="button secondary" id="reset-settings">恢复默认</button><button class="button primary" type="submit"><span data-icon="check"></span>保存偏好</button></div></form></section><section class="panel settings-panel app-controls"><div><h2>KillZHS 后台服务</h2><p>关闭浏览器后计划仍可执行。退出程序会停止任务和计划等待。</p></div><div class="heading-actions"><button class="button secondary" id="diagnose">检查运行环境</button><button class="button danger" id="quit-app">退出并停止任务</button></div></section></section>
 
-      <!-- KILLZHS_FEATURE_PAGES -->
-      <section id="view-guide" class="view" hidden><div class="page-heading"><div><div class="eyebrow">LET’S GET STARTED</div><h1>三步，开始使用<span class="heading-dot">。</span></h1><p>启动窗口保持打开，浏览器就是你的控制台。</p></div></div><div class="guide-grid"><article class="panel guide-card"><span class="step-number">01</span><span class="guide-icon" data-icon="qr"></span><h2>连接账号</h2><p>在学习概览点击「扫码登录」，用知到 App 扫码并确认。若已保存登录状态，也可以先点击「同步课程」。</p></article><article class="panel guide-card"><span class="step-number">02</span><span class="guide-icon" data-icon="layers"></span><h2>挑选课程</h2><p>登录后会同步共享课和校内课。勾选课程，或者用列表右上角的加号，粘贴课程地址手动添加。</p></article><article class="panel guide-card"><span class="step-number">03</span><span class="guide-icon" data-icon="play"></span><h2>开始任务</h2><p>保存倍速和时限后点击「开始学习」。任务动态显示当前视频进度；遇到问题可查看日志，随时停止任务。</p></article></div><section class="panel guide-details"><h2>你可能还想知道</h2><details open><summary>“已运行”和平台课程完成有什么区别？</summary><p>已运行表示脚本已结束这门课程的本次任务。课程可能仍有未完成视频、时限或验证要求，实际完成情况请到平台查看。工作台不会把本地运行进度当成平台完成率。</p></details><details><summary>登录二维码过期、遇到验证码怎么办？</summary><p>原脚本会在二维码过期后申请新的二维码，页面会自动更新。若登录长时间无响应，可先停止，再重新扫码。遇到平台验证，点击页面顶部的「打开当前课程验证」。在官网完成后暂停官方播放器，返回点击「验证后重新开始」；重新开始按当前设置计时。</p></details><details><summary>设置、账号和课程保存在哪里？</summary><p>免安装版的设置、计划和课程清单保存在 Windows 用户目录的 KillZHS 文件夹；源码版使用 .local/webui。勾选记住登录状态时，登录凭据也保存在该目录；关闭服务会清理临时会话。原项目的配置、Cookie 和课程清单不被覆盖。</p></details><details><summary>支持 AI 课程和答题模型设置吗？</summary><p>本界面支持共享课、校内课和 AI 课程。AI 课程可同步或手动添加，需要课程 ID 与班级 ID。在「AI 配置」页设置平台 AI 或自定义服务；默认跳过测验，关闭跳过并开启 AI 后才处理测验。</p></details><details><summary>关闭网页后，任务会停止吗？</summary><p>关闭浏览器标签页不会停止任务，重新打开同一个本地地址即可查看。点击「停止任务」，或在启动窗口按 Ctrl+C，会停止当前运行并关闭相关进程。</p></details></section></section>
-    </main>
+            <section id="view-ai" class="view" hidden>
+        <div class="page-heading"><div><div class="eyebrow">YOUR MODEL, YOUR CHOICE</div><h1>AI 配置<span class="heading-dot">。</span></h1><p>用于 AI 课程和“测验与考试”自动答题。保存配置不会发送模型请求。</p></div><span class="badge green" id="ai-usage">本次生成请求 0 次</span></div>
+        <section class="panel settings-panel"><div class="panel-heading"><div><h2>答题与模型服务</h2><p>默认跳过测验，需要时再开启 AI 答题。</p></div><span class="stat-icon sage" data-icon="layers"></span></div>
+          <p class="panel-footnote" id="ai-run-note" hidden>当前任务继续使用启动时的 AI 设置。这里保存的配置将在下一次任务生效，无需停止当前任务。</p>
+          <form id="ai-form">
+            <div class="setting-row"><div><label for="ai-enabled">启用 AI</label><p>使用平台 AI，或填写兼容 Chat Completions 的服务。</p></div><input id="ai-enabled" type="checkbox"></div>
+            <div class="setting-row"><div><label for="ai-no-exam">学习任务跳过 AI 课程测验</label><p>仅控制 AI 课程的学习任务。“测验与考试”页通过独立按钮开始答题和交卷。</p></div><input id="ai-no-exam" type="checkbox" checked></div>
+            <div class="setting-row"><div><label for="ai-source">模型来源</label><p>平台 AI 使用当前知到登录会话。</p></div><select id="ai-source"><option value="platform">平台 AI</option><option value="custom">自定义服务</option></select></div>
+            <div id="custom-ai-fields">
+              <div class="setting-row"><div><label for="ai-base">API 地址</label><p>例如 https://你的服务地址/v1，末尾不用加 chat/completions。</p></div><input id="ai-base" type="url" value="https://api.openai.com/v1" required maxlength="500"></div>
+              <div class="setting-row"><div><label for="ai-key">API Key</label><p id="ai-key-state">尚未保存密钥。留空不会覆盖已有密钥。</p></div><input id="ai-key" type="password" autocomplete="new-password" maxlength="500" placeholder="填写新密钥"></div>
+              <div class="setting-row slim"><label class="remember-row"><input id="ai-clear-key" type="checkbox">清除已保存的模型密钥</label></div>
+              <div class="setting-row"><div><label for="ai-model">模型名称</label><p>填写服务商提供的准确模型 ID。</p></div><input id="ai-model" type="text" maxlength="160" placeholder="model-id"></div>
+            </div>
+            <div class="setting-row"><div><label for="ai-stream">流式响应</label><p>适用于支持流式响应的模型服务。</p></div><input id="ai-stream" type="checkbox" checked></div>
+            <div class="setting-row"><div><label for="ai-max">单次任务生成请求上限</label><p>包含失败后的重试次数，达到上限后停止任务；不代表金额预算。</p></div><input id="ai-max" type="number" min="1" max="100" step="1" value="10" required></div>
+            <details class="advanced-fields"><summary>PPT 参考资料</summary><p>开启后会把相关课件交给所填服务处理，可能产生服务费用。</p>
+              <div class="setting-row"><div><label for="ppt-enabled">允许使用 PPT 参考资料</label></div><input id="ppt-enabled" type="checkbox"></div>
+              <div class="setting-row"><div><label for="ppt-base">文件处理服务地址</label></div><input id="ppt-base" type="url" required value="https://api.moonshot.cn/v1" maxlength="500"></div>
+              <div class="setting-row"><div><label for="ppt-key">文件处理 API Key</label><p id="ppt-key-state">留空保留原密钥。</p></div><input id="ppt-key" type="password" autocomplete="new-password" maxlength="500"></div>
+              <div class="setting-row slim"><label class="remember-row"><input id="ppt-clear-key" type="checkbox">清除已保存的文件处理密钥</label></div>
+              <div class="setting-row"><div><label for="ppt-delete">转换后删除服务端文件</label><p>只针对本次课件处理使用的文件。</p></div><input id="ppt-delete" type="checkbox" checked></div>
+            </details>
+            <div class="settings-actions"><button class="button secondary" id="test-ai" type="button" data-feature-button>检查模型列表</button><button class="button primary" type="submit" data-feature-button data-allow-while-running><span data-icon="check"></span>保存 AI 配置</button></div>
+          </form><p class="panel-footnote">模型列表检查仅请求服务的 /models 接口，不发送答题内容。列表可访问不代表所有生成请求都能成功。</p>
+        </section>
+      </section>
+
+      <section id="view-plan" class="view" hidden>
+        <div class="page-heading"><div><div class="eyebrow">A LITTLE, EVERY DAY</div><h1>每天，留出一点时间<span class="heading-dot">。</span></h1><p>电脑开机联网、KillZHS 保持后台运行时，计划会自动执行。</p></div><span class="badge" id="plan-status">计划未启用</span></div>
+        <section class="plan-summary panel"><span class="stat-icon sage" data-icon="calendar"></span><div><span>下次执行</span><strong id="next-run">保存并启用计划后显示</strong></div><button class="button secondary small" id="pause-plan" data-feature-button data-allow-while-running>暂停未来计划</button></section>
+        <section class="panel settings-panel"><div class="panel-heading"><div><h2>每日计划</h2><p>同一天最多触发一次；已有任务运行时跳过。修改计划不影响当前任务。</p></div></div><form id="plan-form">
+          <div class="setting-row"><div><label for="plan-enabled">启用计划</label><p>启用前需要记住登录状态，登录过期时会记录原因。</p></div><input id="plan-enabled" type="checkbox"></div>
+          <div class="setting-row"><div><label for="plan-time">每天开始时间</label><p>按这台电脑的本地时间执行。</p></div><input id="plan-time" type="time" value="20:00" required></div>
+          <div class="setting-row"><div><label for="plan-minutes">整批任务总时长</label><p>所有选中课程共用这段时间，到时结束本次运行。</p></div><div class="input-suffix"><input id="plan-minutes" type="number" min="1" max="240" step="1" value="30" required><span>分钟</span></div></div>
+          <div class="setting-row"><div><label for="plan-catchup">错过后的补跑窗口</label><p>0 表示关闭；窗口内启动或唤醒程序后可补跑，当天最多一次，跨天不补跑。</p></div><div class="input-suffix"><input id="plan-catchup" type="number" min="0" max="720" step="1" value="0" required><span>分钟</span></div></div>
+          <fieldset class="plan-days"><legend>执行日</legend><div id="plan-days"></div></fieldset>
+          <div class="plan-courses-heading"><h3>要运行的课程</h3><button class="text-button" id="plan-use-selection" type="button">使用概览中的已选课程</button></div><div id="plan-courses" class="plan-courses"></div>
+          <div class="settings-actions"><button class="button primary" type="submit" data-feature-button data-allow-while-running><span data-icon="check"></span>保存计划</button></div>
+        </form><p class="panel-footnote">本版本不会自动开机、唤醒电脑或注册开机启动项。关闭控制窗口或退出程序后，计划暂停等待；重新启动后只在设置的补跑窗口内尝试一次。</p></section>
+      </section>
+
+      <section id="view-notifications" class="view" hidden>
+        <div class="page-heading"><div><div class="eyebrow">STAY INFORMED</div><h1>消息通知<span class="heading-dot">。</span></h1><p>无人值守时，把需要处理的情况发送到手机。默认关闭，密钥仅保存在本机。</p></div></div>
+        <section class="panel settings-panel"><div class="panel-heading"><div><h2>通知渠道</h2><p>只发送运行状态，不发送课程内容、密钥或完整日志。</p></div></div>
+          <form id="notification-form">
+            <div class="setting-row"><div><label for="notification-enabled">启用通知</label><p>程序需要保持运行和联网；保存配置不会发送消息。</p></div><input id="notification-enabled" type="checkbox"></div>
+            <div class="setting-row"><div><label for="notification-provider">推送服务</label></div><select id="notification-provider"><option value="pushplus">PushPlus</option><option value="bark">Bark</option></select></div>
+            <div id="pushplus-fields">
+              <div class="setting-row"><div><label for="pushplus-token">PushPlus Token</label><p id="pushplus-key-state">留空保留已有密钥。</p></div><input id="pushplus-token" type="password" autocomplete="new-password" maxlength="500"></div>
+              <div class="setting-row slim"><label class="remember-row"><input id="pushplus-clear" type="checkbox">清除 PushPlus 密钥</label></div>
+            </div>
+            <div id="bark-fields" hidden>
+              <div class="setting-row"><div><label for="bark-server">Bark 服务器</label><p>可使用默认服务器或自建服务，不要在地址里附带设备密钥。</p></div><input id="bark-server" type="url" value="https://api.day.app" maxlength="500" required></div>
+              <div class="setting-row"><div><label for="bark-key">Bark 设备密钥</label><p id="bark-key-state">留空保留已有密钥。</p></div><input id="bark-key" type="password" autocomplete="new-password" maxlength="500"></div>
+              <div class="setting-row slim"><label class="remember-row"><input id="bark-clear" type="checkbox">清除 Bark 密钥</label></div>
+            </div>
+            <fieldset class="notification-events"><legend>接收哪些提醒</legend>
+              <label><input type="checkbox" data-notify-event="finished" checked>学习任务结束或失败</label>
+              <label><input type="checkbox" data-notify-event="verification" checked>遇到验证码，需要手动处理</label>
+              <label><input type="checkbox" data-notify-event="auth" checked>任务发现登录状态不可用</label>
+              <label><input type="checkbox" data-notify-event="skipped" checked>定时计划被跳过</label>
+            </fieldset>
+            <div class="settings-actions"><button class="button secondary" id="test-notification" type="button" data-feature-button data-allow-while-running>发送测试通知</button><button class="button primary" type="submit" data-feature-button data-allow-while-running><span data-icon="check"></span>保存通知设置</button></div>
+          </form>
+          <p class="panel-footnote">先在 PushPlus 或 Bark 获取接收端密钥。测试按钮会实际发送一条消息；程序收到服务接受响应后会写入日志，手机是否送达请以接收端为准。演示模式不会连接推送服务。</p>
+        </section>
+      </section>
+
+      <dialog id="history-dialog" class="history-dialog" aria-labelledby="history-log-title">
+        <div class="history-dialog-heading"><h2 id="history-log-title">本次任务日志</h2><button class="button secondary small" id="close-history" type="button">关闭</button></div>
+        <p class="panel-footnote">日志已脱敏，最多保留最近 100 次任务，每次最多 2 MB。分享前仍请检查个人信息。</p>
+        <pre id="history-log-text" tabindex="0">正在读取…</pre>
+        <div class="settings-actions"><button class="button primary" id="download-history" type="button" disabled>下载本次日志</button></div>
+      </dialog>
+
+      <section id="view-guide" class="view" hidden><div class="page-heading"><div><div class="eyebrow">LET’S GET STARTED</div><h1>三步，开始使用<span class="heading-dot">。</span></h1><p>启动窗口保持打开，浏览器就是你的控制台。</p></div></div><div class="guide-grid"><article class="panel guide-card"><span class="step-number">01</span><span class="guide-icon" data-icon="qr"></span><h2>连接账号</h2><p>在学习概览点击「扫码登录」，用知到 App 扫码并确认。若已保存登录状态，也可以先点击「同步课程」。</p></article><article class="panel guide-card"><span class="step-number">02</span><span class="guide-icon" data-icon="layers"></span><h2>挑选课程</h2><p>登录后会同步共享课和校内课。勾选课程，或者用列表右上角的加号，粘贴课程地址手动添加。</p></article><article class="panel guide-card"><span class="step-number">03</span><span class="guide-icon" data-icon="play"></span><h2>开始任务</h2><p>保存倍速和时限后点击「开始学习」。任务动态显示当前视频进度；遇到问题可查看日志，随时停止任务。</p></article></div><section class="panel guide-details"><h2>你可能还想知道</h2><details open><summary>“已运行”和平台课程完成有什么区别？</summary><p>已运行表示脚本已结束这门课程的本次任务。课程可能仍有未完成视频、时限或验证要求，实际完成情况请到平台查看。工作台不会把本地运行进度当成平台完成率。</p></details><details><summary>登录二维码过期、遇到验证码怎么办？</summary><p>原脚本会在二维码过期后申请新的二维码，页面会自动更新。若登录长时间无响应，可先停止，再重新扫码。遇到平台验证，点击页面顶部的「打开当前课程验证」。在官网完成后暂停官方播放器，返回点击「验证后重新开始」；重新开始按当前设置计时。</p></details><details><summary>设置、账号和课程保存在哪里？</summary><p>免安装版的设置、计划和课程清单保存在 %LOCALAPPDATA%\KillZHS\v2；源码版使用 .local/data。勾选记住登录状态时，登录凭据也保存在该目录；关闭服务会清理临时会话。原项目的配置、Cookie 和课程清单不被覆盖。</p></details><details><summary>支持 AI 课程和答题模型设置吗？</summary><p>本界面支持共享课、校内课和 AI 课程。AI 课程可同步或手动添加，需要课程 ID 与班级 ID。在「AI 配置」页设置平台 AI 或自定义服务；默认跳过测验，关闭跳过并开启 AI 后才处理测验。</p></details><details><summary>关闭网页后，任务会停止吗？</summary><p>关闭浏览器标签页不会停止任务，重新打开同一个本地地址即可查看。点击「停止任务」，或在启动窗口按 Ctrl+C，会停止当前运行并关闭相关进程。</p></details></section></section>
+          <section id="view-assessments" class="view" hidden>
+        <div class="page-heading"><div><div class="eyebrow">ONE PAPER AT A TIME</div><h1>测验与考试<span class="heading-dot">。</span></h1><p>同步共享课的章节测验与在线考试，选择后自动答题并交卷。</p></div><span class="badge amber">试验功能</span></div>
+        <section class="panel">
+          <div class="panel-heading"><div><h2>选择课程</h2><p>同步列表不会进入试卷；开始答题可能消耗次数并启动考试计时。</p></div><a class="text-button" href="#ai">配置答题模型 →</a></div>
+          <div class="assessment-toolbar"><label for="assessment-course">共享课</label><select id="assessment-course"></select><button class="button secondary" id="assessment-scan" type="button">同步测验与考试</button></div>
+          <p class="panel-footnote">自动答题支持纯文字单选、多选、判断题。图片、附件、特殊字形及其他题型需到官网处理。模型可能答错，成绩以平台批阅为准。</p>
+          <div class="assessment-list" id="assessment-list"><p class="panel-footnote">选择课程后同步清单。</p></div>
+          <div class="settings-actions"><span id="assessment-count">已选择 0 份</span><button class="button primary" id="assessment-run" type="button">自动答题并交卷</button></div>
+          <p class="panel-footnote" id="assessment-status" role="status">答题沿用已保存的 AI 配置和单次请求上限；填写、复核或交卷失败时停止，保留任务日志。</p>
+        </section>
+      </section>
+      <section id="view-official" class="view" hidden>
+        <div class="page-heading"><div><div class="eyebrow">THE OFFICIAL PAGE</div><h1>官网与验证<span class="heading-dot">。</span></h1><p>在下方使用知到官方页面。验证码仍由你操作，工作台不会自动判断验证成功。</p></div></div>
+        <section class="panel official-panel">
+          <div class="panel-heading"><div><h2 id="official-title">打开课程或验证入口</h2><p id="official-description">待验证时点击顶部“在工作台打开验证”，或从测验清单选择官方入口。</p></div><button class="button secondary small" id="official-close" type="button" hidden>关闭官方页面</button></div>
+          <p class="panel-footnote">内嵌入口为试验功能。官网可能限制嵌入，浏览器也可能阻止登录 Cookie。若空白、循环登录或验证无响应，请使用新窗口；登录同一账号，验证后暂停官方播放器。</p>
+          <div class="official-actions"><a class="button secondary" id="official-external" target="_blank" rel="noopener noreferrer" hidden>在新窗口打开官网 ↗</a><button class="button primary" id="official-return" type="button">返回工作台处理结果</button></div>
+          <iframe id="official-frame" title="知到官方页面" hidden referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads"></iframe>
+        </section>
+      </section>
+</main>
   </div>
 
   <dialog id="course-dialog" aria-labelledby="dialog-title"><form id="add-form"><div class="dialog-heading"><h2 id="dialog-title">添加一门课程</h2><button type="button" class="icon-button" id="close-dialog" aria-label="关闭"><span data-icon="x"></span></button></div><p>粘贴课程网址，自动提取课程 ID。</p><label class="field-label" for="course-url">课程地址或 ID</label><input id="course-url" required maxlength="2000" placeholder="https://…?courseId=…" autocomplete="off"><label class="field-label spaced" for="course-name">课程名称 <span class="field-hint">选填</span></label><input id="course-name" maxlength="160" placeholder="方便自己辨认的名字"><label class="field-label spaced" for="course-kind">课程类型</label><select id="course-kind"><option value="auto">自动识别</option><option value="zhidao">共享课</option><option value="hike">校内课</option><option value="ai">AI 课程</option></select><div id="class-id-field" hidden><label class="field-label spaced" for="course-class-id">AI 课程班级 ID</label><input id="course-class-id" inputmode="numeric" maxlength="30" placeholder="classId"></div><p class="form-error" id="add-error" role="alert"></p><button class="button primary full" type="submit"><span data-icon="plus"></span>添加到课程清单</button></form></dialog>

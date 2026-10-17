@@ -1,183 +1,71 @@
-# KillZHS
+# KillZHS 0.2.1
 
-智慧树 / 知到的本地网页工作台。Windows 用户解压后双击程序，即可在浏览器中登录、
-选择课程、配置 AI、设置每日计划和查看运行记录。
+智慧树 / 知到本地网页学习工作台。基于旧版 `fuckZHS` 重构，整理为可独立运行和维护的项目；原作者版权与历史保留。
 
-基于 [VermiIIi0n/fuckZHS](https://github.com/VermiIIi0n/fuckZHS) 二次开发。
-原作者版权与 MIT 许可证完整保留，改动说明见 [NOTICE.md](NOTICE.md)。
+支持扫码登录、课程同步、共享课 / 校内课 / AI 课、学习时限、每日计划、通知、历史日志、共享课测验与考试，以及官网验证入口。AI 请求、课件上传和自动交卷均由用户在工作台主动配置或启动。
 
-**当前为 `0.1.0-beta.7` 测试版。** 已完成离线测试、浏览器操作及 Windows 打包检查；
-已有本机真实扫码、共享课启动及章节测验清单读取记录，完整课程完成情况、AI 课程及模型生成仍需进一步验证。
-本地“已运行”不等于平台认定课程已完成，实际结果以平台为准。
+本次重构以离线假平台、请求基准和浏览器验证为依据；真实账号登录、平台累计学习时长和真实交卷仍需本人确认。演示结果不代表平台接受了进度或答案。
 
-## 下载使用
+0.2.1 修复自动答题读取试卷时误拒绝包含 `+`、`/`、`=` 的题目 / 选项编号。相关记录见 [自动答题编号修复](docs/自动答题编号修复-2026-10-17.md)。正在运行的旧版 0.1.0-beta.7 不会因下载新包而自动更新，请退出旧程序后启动新版本。
 
-从 [Releases](https://github.com/LilPolaris/KillZHS/releases) 下载 **Windows x64 ZIP**，
-完整解压，双击 `KillZHS.exe`。不需要安装 Python 或 Node.js。
-请保留同目录的 `_internal` 文件夹。程序会打开本地网页，并把后台控制窗口最小化到任务栏。
+## Windows 使用
 
-1. 使用知到 App 扫码登录，等待课程同步。
-2. 勾选课程，按需设置倍速、单门课程时限或整批任务总时长。
-3. 点击「开始学习」，在任务动态中查看当前状态，随时停止。
+从 [0.2.1 发布页](https://github.com/LilPolaris/KillZHS/releases/tag/v0.2.1) 下载 Windows x64 安装包，安装时可选择是否创建桌面快捷方式，默认不勾选。安装到当前用户目录，不需要管理员权限，可从 Windows 应用列表卸载；卸载保留账号设置和运行记录。
 
-关闭网页后程序仍在后台运行。通过控制窗口，或网页「偏好设置 → 退出并停止任务」退出。
-完整说明见 [Windows 使用说明](docs/WINDOWS.md)。
+也提供免安装 ZIP：完整解压，双击 `KillZHS.exe`，保留旁边的 `_internal` 文件夹。程序打开本地工作台，后台控制窗口可停止任务或退出。说明见 [Windows 使用说明](docs/WINDOWS.md)。
 
-![学习概览，截图为离线演示数据](docs/screenshots/overview.png)
+新版数据保存在 `%LOCALAPPDATA%\KillZHS\v2`，不读取旧版数据；首次使用需要重新扫码和配置。源码版默认数据目录为 `.local/data`。演示模式只使用临时数据，不连接平台、模型或通知服务。
 
-## 功能
+## 源码运行
 
-- 扫码登录、复用本机登录状态；同步共享课、校内课及 AI 课程。
-- 搜索、筛选和多选课程；支持粘贴课程地址或手动填写课程 / 班级 ID。
-- 网页配置平台 AI、自定义模型服务、流式输出和 PPT 文件处理。
-- “测验与考试”页同步共享课章节测验与在线考试，可独立开始自动答题并交卷（试验功能）。
-- 自动处理纯文字单选、多选、判断题；整卷生成后保存，读取平台答案复核，再交卷一次。
-- 交卷结果不明时保留记录并阻止重复提交；遇到图片、附件、特殊字形和不支持题型时停止。
-- “官网与验证”页可试用内嵌官方页面，也保留新窗口入口；验证码仍需人工操作。
-- 密钥仅保存在本机，不回传到页面；可替换或清除，保存配置不触发 API 请求。
-- 任务运行中也可保存 AI 配置，下一次任务生效，当前任务继续使用启动时的设置。
-- 自定义服务连接检查只请求 `/models`，不发送课程或答题内容。
-- AI 生成请求上限包含失败重试，达到上限停止任务；该上限不代表金额预算。
-- 每日计划：选择时间、星期、课程和总时长，默认 30 分钟。
-- 按整批任务的实际经过时间控制总时长，包含课程切换与网络等待。
-- 到时或点击停止后先请求收尾，尝试提交未上报的进度，最多等待 30 秒；卡住时强制终止。
-- 网页状态按游标读取新增日志，历史记录未变化时不重复传输；收尾期间仍可查看状态。
-- 同一天最多自动触发一次，重复启动受到实例锁保护。
-- 最近 100 次任务历史及按次保存的脱敏日志，可查看和下载；每次最多 2 MB。
-- 异常退出后恢复上次任务记录为“意外中断”，保留退出前已写入的日志。
-- PushPlus / Bark 通知：任务结束、需要验证、登录状态不可用和计划跳过；默认关闭。
-- 共享课遇到验证码后停止本批次，顶部显示验证入口，可直接打开当前课程页面。
-- 验证后可按当前设置重新开始未完成课程；等待验证时，未来定时计划跳过并记录原因。
-- 最近 600 条会话日志、日志导出与环境检查。
-- 本机访问限制、独立用户数据目录和后台控制窗口。
-
-## 遇到平台验证
-
-工作台顶部会显示当前课程，可选择“在工作台打开验证”或在新的官方标签页完成验证；
-若官网要求登录，请使用同一个知到账号。完成后先暂停官方播放器，返回工作台点击「验证后重新开始」。
-重新开始使用当前设置并重新计时，脚本会跳过平台已完成的视频，不会重复选择本批次已经运行完的课程。
-刷新网页或重启工作台后仍可保留待验证提示；旧版本记录只有课程名时，仅在名称唯一匹配时恢复课程链接。
-工作台目前不自动识别、提交验证码，也不能自动确认验证已经完成；打开课程页不保证立即触发验证弹窗。
-内嵌使用官方页面自己的登录环境，不会把本地脚本 Cookie 注入页面；官网限制嵌入或浏览器阻止第三方 Cookie 时使用新窗口。
-已匿名确认当前课程入口可在内嵌区域打开官方登录页；尚未验证登录后验证码及旧 worker 恢复的完整流程。
-
-新增默认关闭的[网页验证恢复实验](docs/VERIFICATION_PROBE.md)：保留当前 worker，人工确认后仅重发一次原请求，
-再观察后续正常上报与平台累计时长。未启用实验时增加脱敏诊断日志，并修复弹题验证码异常被吞掉后继续上报的问题。
-实验尚无真实账号的原地恢复样本，不代表已经验证可自动恢复。Windows 发布目录内可用“验证实验模式.bat”显式启动。
-
-## AI 课程
-
-AI 课程需要课程 ID 和班级 ID，自动同步失败时可手动添加。
-默认**跳过测验**；需要处理测验时，在「AI 配置」中启用 AI 并关闭跳过测验。
-自定义服务使用兼容 Chat Completions 的接口，填写服务商提供的准确模型 ID。
-
-PPT 处理单独配置文件服务。开启后相关课件会上传到该服务，并可能产生费用；
-默认开启转换后删除本次上传的服务端文件。
-
-<details>
-<summary>查看 AI 配置界面</summary>
-
-![AI 配置，截图为离线演示](docs/screenshots/ai.png)
-
-</details>
-
-## 章节测验与在线考试
-
-在“测验与考试”页选择共享课、同步清单，再点击“自动答题并交卷”。支持纯文字单选、多选、判断题。
-进入试卷可能消耗答题机会或开始计时，模型可能答错；本版尚未完成真实账号交卷验收。
-接口、支持范围和提交保护见 [测验与官方页面说明](docs/ASSESSMENTS.md)。
-
-## 每日计划
-
-例如：每天 20:00 运行所选课程，**所有课程合计最多运行 30 分钟**。
-按电脑本地时间执行，程序保持后台运行、电脑开机联网且登录有效时才可执行。
-
-- 到时停止继续处理课程，先收尾再结束，最多额外等待 30 秒；实际进度以平台接收为准。
-- 默认错过时间不补跑；可设置 1–720 分钟的补跑窗口，窗口内恢复运行时尝试一次，跨天不补跑。
-- 该时刻有其他任务运行时跳过并记入历史，不会在现有任务结束后自动重试。
-- 当天的尝试会先保存，重新启动程序不会重复触发同一天的计划。
-- 登录过期或需要验证时，查看日志并重新登录。
-- 第一版不自动开机、唤醒电脑或注册开机启动项。
-- 可在运行中保存或暂停未来计划，不影响当前任务。
-
-![定时计划，截图为离线演示](docs/screenshots/plan.png)
-
-## 消息通知与任务日志
-
-在「消息通知」中选择 PushPlus 或 Bark，填写自己的 Token / 设备密钥，并选择提醒事件。
-保存不会发送消息；点击「发送测试通知」才会实际发送一条消息，通知无需停止当前任务。
-参数说明见 [PushPlus 官方文档](https://www.pushplus.plus/doc/guide/api.html)、
-[Bark 官方文档](https://bark.day.app/#/tutorial)。Bark 可使用默认服务器或自建服务器。
-
-通知只包含运行状态，不包含密钥、完整日志或课程内容。发送在独立队列执行，失败不会阻塞任务，
-不自动重试；推送服务接受请求不代表手机已经收到。演示模式不连接任何推送服务。
-登录提醒来自任务执行时发现的问题，本版没有额外的定时登录探测。
-
-「运行日志 → 历史记录 → 查看日志」可打开某一次任务的详细日志，并单独下载。
-日志随任务写入本机，重启后仍可查看；超出最近 100 次的日志自动清理，每次最多 2 MB。
-旧版历史记录没有详细日志，升级后不会补生成。
-
-## 本机数据
-
-Windows 发布版使用 `%LOCALAPPDATA%\KillZHS` 保存配置、Cookie、计划、缓存、通知设置及任务日志，
-升级时替换程序目录即可保留数据。源码版默认使用 `.local/webui`。
-这些文件含有私人凭据，不要分享整个用户数据目录。
-原项目的 `config.json`、`cookies.json`、`execution.json` 不会被覆盖。
-
-## 从源码运行
-
-需要 Python 3.12 或以上，安装原有运行依赖：
+支持 Windows x64、Python 3.12 / 3.14。先在项目目录准备虚拟环境及锁定依赖，再在 PowerShell 启动：
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements-lock.txt
-.\.venv\Scripts\python.exe killzhs.py --desktop
+$env:PYTHONPATH = 'src'
+.venv\Scripts\python.exe -B -m killzhs
 ```
 
-Windows 也可双击 `启动KillZHS.bat`。普通终端模式使用 `python killzhs.py`。
-保留原命令行入口 `main.py`，上游文档见 [原项目说明](docs/UPSTREAM_README.md)。
+仅查看演示：
 
 ```powershell
-# 离线演示，不连接平台或模型
-python killzhs.py --demo
-
-# 更换端口；不自动打开浏览器
-python killzhs.py --port 8766 --no-browser
-
-# 无控制窗口的后台服务模式
-python killzhs.py --headless --no-browser
+$env:PYTHONPATH = 'src'
+.venv\Scripts\python.exe -B -m killzhs --demo
 ```
 
-## 开发与构建
+依赖安装使用 `requirements-lock.txt`；开发和构建分别使用 `requirements-dev.txt`、`requirements-build-lock.txt`。可用 `pip install -e . --no-deps` 注册 `killzhs` 启动命令。前端使用原生 ES 模块，无构建步骤。
+
+## 开发验证
 
 ```powershell
-python -m unittest discover -s tests -v
-python -m pip install -r requirements-build-lock.txt
-python scripts/build_windows.py
+.venv\Scripts\python.exe -B -m pytest
+.venv\Scripts\python.exe -B -m ruff check src tests scripts
+.venv\Scripts\python.exe -B scripts/lock_dependencies.py --check
+.venv\Scripts\python.exe -B scripts/browser_smoke.py
+.venv\Scripts\python.exe -B scripts/compare_ui.py
+.venv\Scripts\python.exe -B scripts/verify_release.py
 ```
 
-Windows 包需要在 Windows 上构建。产物位于 `output/release`，附带 SHA-256 校验值。
-构建脚本使用明确的资源清单，不包含开发者的配置、Cookie、模型密钥或运行记录。
-运行与构建依赖使用锁定文件；构建前会核对已安装版本，许可证从运行依赖关系自动收集，
-并附带版本与许可证文件清单。刷新锁定文件使用 `python scripts/lock_dependencies.py`，
-该命令只读取当前环境，不安装或升级软件。版本锁定不代表 ZIP 字节完全可复现。
+测试使用离线假平台；AI 提示处理依赖预先准备的公开 `cl100k_base` 分词缓存 `.local/tokenizer/`。CI 展示了测试前下载并校验固定 SHA256 的步骤。浏览器检查需要已安装的 Playwright Chromium。界面对比还需要只读的旧目录 `../fuckZHS`，可用 `--legacy-root` 指定其他位置。请求基准已经提交，普通测试不运行旧项目，也不改写基准。
 
-CI 在 Python 3.12 / 3.14 检查基础静态错误、JavaScript 语法及离线测试，
-并在 3.14 运行隔离演示环境下的浏览器流程。手动执行网页检查：
+Windows 构建前检查和打包：
 
 ```powershell
-python -m pip install -r requirements-dev.txt
-python -m playwright install chromium
-python scripts/browser_smoke.py
+.venv\Scripts\python.exe -B scripts/build_windows.py --check
+.venv\Scripts\python.exe -B scripts/build_windows.py
+.venv\Scripts\python.exe -B scripts/build_installer.py --check
+.venv\Scripts\python.exe -B scripts/build_installer.py --update-manifest
 ```
 
-首次审查的逐项进度见 [审查落实情况](docs/REVIEW_STATUS.md)，
-倍速与耗时的边界见 [速度分析](docs/PERFORMANCE.md)。
+构建只使用已有工具和分词缓存，不安装依赖、不下载数据。每次构建生成独立目录，最新路径与 SHA256 见 `output/release/latest-build.json`。可用 `scripts/verify_release.py --exe <KillZHS.exe路径> --output output/acceptance/frozen.json` 验证打包程序的演示启停和真实子进程环境检查。
 
-## 来源与许可
+安装器构建需要另行准备官方 Inno Setup 编译器及中文译文，固定版本、校验值和静默安装选项见 [安装器说明](docs/INSTALLER.md)。
 
-上游基线：`VermiIIi0n/fuckZHS@04cbbb8`。原有课程逻辑归上游作者及贡献者所有。
-KillZHS 新增网页控制、AI 配置、计划与历史、Windows 分发流程，并修复了无终端环境、
-API 地址拼接、PPT 服务地址与文件隔离等接入问题。
+## 结构与记录
 
-本项目采用 [MIT](LICENSE)。与原作者及智慧树平台无隶属关系，请按课程及平台规则使用。
+- `src/killzhs/app`：动作、任务状态、计划、历史、HTTP 与桌面入口。
+- `src/killzhs/worker`：统一的 spawn 子进程、管道事件及协作停止。
+- `src/killzhs/platform`、`ai`：显式接收会话、停止控制、进度与请求预算的客户端。
+- `web/js`：按视图拆分的 ES 模块，共用状态、传输和表单助手。
+- [重构设计](docs/superpowers/specs/2026-10-17-killzhs-refactor-design.md)、[重构进度与验收](docs/重构进度-2026-10-17.md)。
+
+上游作者版权和 MIT 许可见 [LICENSE](LICENSE)，改动来源见 [NOTICE.md](NOTICE.md)。

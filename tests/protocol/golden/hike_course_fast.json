@@ -1,0 +1,302 @@
+{
+ "seed": 0,
+ "outcome": {
+  "raised": null
+ },
+ "results": [
+  null
+ ],
+ "logs": [],
+ "unhandled": [],
+ "requests": [
+  {
+   "method": "GET",
+   "url": "https://studyresources.zhihuishu.com/studyResources/stuResouce/queryResourceMenuTree",
+   "query": [
+    [
+     "courseId",
+     "3001"
+    ],
+    [
+     "_",
+     "1760000000000"
+    ]
+   ],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "origin": "https://hike.zhihuishu.com",
+    "referer": "https://hike.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": null
+  },
+  {
+   "method": "GET",
+   "url": "https://studyresources.zhihuishu.com/studyResources/stuResouce/stuViewFile",
+   "query": [
+    [
+     "courseId",
+     "3001"
+    ],
+    [
+     "fileId",
+     "31"
+    ],
+    [
+     "_",
+     "1760000000000"
+    ]
+   ],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "origin": "https://hike.zhihuishu.com",
+    "referer": "https://hike.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": null
+  },
+  {
+   "method": "GET",
+   "url": "https://hike-teaching.zhihuishu.com/stuStudy/saveStuStudyRecord",
+   "query": [
+    [
+     "uuid",
+     "U-fake-0001"
+    ],
+    [
+     "courseId",
+     "3001"
+    ],
+    [
+     "fileId",
+     "31"
+    ],
+    [
+     "studyTotalTime",
+     "25"
+    ],
+    [
+     "startWatchTime",
+     "0"
+    ],
+    [
+     "endWatchTime",
+     "25"
+    ],
+    [
+     "startDate",
+     "1760000000000"
+    ],
+    [
+     "endDate",
+     "1760000007000"
+    ],
+    [
+     "_",
+     "1760000007000"
+    ],
+    [
+     "signature",
+     "94166fb0c8bf992e65d6679d5a9f806d"
+    ]
+   ],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "origin": "https://hike.zhihuishu.com",
+    "referer": "https://hike.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": null
+  },
+  {
+   "method": "GET",
+   "url": "https://studyresources.zhihuishu.com/studyResources/stuResouce/stuViewFile",
+   "query": [
+    [
+     "courseId",
+     "3001"
+    ],
+    [
+     "fileId",
+     "32"
+    ],
+    [
+     "_",
+     "1760000008844"
+    ]
+   ],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "origin": "https://hike.zhihuishu.com",
+    "referer": "https://hike.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": null
+  },
+  {
+   "method": "GET",
+   "url": "https://studyresources.zhihuishu.com/studyResources/stuResouce/stuViewFile",
+   "query": [
+    [
+     "courseId",
+     "3001"
+    ],
+    [
+     "fileId",
+     "35"
+    ],
+    [
+     "_",
+     "1760000011360"
+    ]
+   ],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "origin": "https://hike.zhihuishu.com",
+    "referer": "https://hike.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": null
+  },
+  {
+   "method": "GET",
+   "url": "https://hike-teaching.zhihuishu.com/stuStudy/saveStuStudyRecord",
+   "query": [
+    [
+     "uuid",
+     "U-fake-0001"
+    ],
+    [
+     "courseId",
+     "3001"
+    ],
+    [
+     "fileId",
+     "35"
+    ],
+    [
+     "studyTotalTime",
+     "5"
+    ],
+    [
+     "startWatchTime",
+     "12"
+    ],
+    [
+     "endWatchTime",
+     "17"
+    ],
+    [
+     "startDate",
+     "1760000011360"
+    ],
+    [
+     "endDate",
+     "1760000013360"
+    ],
+    [
+     "_",
+     "1760000013360"
+    ],
+    [
+     "signature",
+     "ba32a26f7d6dccbe05efdef1af838b1a"
+    ]
+   ],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "origin": "https://hike.zhihuishu.com",
+    "referer": "https://hike.zhihuishu.com/",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": null
+  }
+ ],
+ "background": {
+  "counts": {
+   "{\"method\": \"GET\", \"query\": [[\"jsonpCallBack\", \"result\"], [\"videoID\", \"880031\"]], \"url\": \"https://newbase.zhihuishu.com/video/initVideo\"}": 1,
+   "{\"method\": \"GET\", \"query\": [[\"jsonpCallBack\", \"result\"], [\"videoID\", \"880035\"]], \"url\": \"https://newbase.zhihuishu.com/video/initVideo\"}": 1,
+   "{\"method\": \"GET\", \"query\": [], \"url\": \"https://video.example/880031.mp4\"}": 1,
+   "{\"method\": \"GET\", \"query\": [], \"url\": \"https://video.example/880035.mp4\"}": 1
+  },
+  "heartbeat": []
+ }
+}

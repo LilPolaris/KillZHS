@@ -1,0 +1,211 @@
+{
+ "seed": 0,
+ "outcome": {
+  "raised": null
+ },
+ "results": [
+  [
+   {
+    "secret": "a1b2c3d4e5",
+    "courseName": "共享课1"
+   },
+   {
+    "secret": "shared2x",
+    "courseName": "共享课2"
+   },
+   {
+    "secret": "shared3x",
+    "courseName": "共享课3"
+   },
+   {
+    "secret": "shared4x",
+    "courseName": "共享课4"
+   },
+   {
+    "secret": "shared5x",
+    "courseName": "共享课5"
+   },
+   {
+    "secret": "shared6x",
+    "courseName": "共享课6"
+   },
+   {
+    "secret": "shared7x",
+    "courseName": "共享课7"
+   }
+  ],
+  [
+   {
+    "courseId": 3001,
+    "courseName": "示例校内课"
+   }
+  ],
+  [
+   {
+    "courseId": 1839576198548688896,
+    "courseName": "示例AI课",
+    "classId": 4239
+   }
+  ]
+ ],
+ "logs": [],
+ "unhandled": [],
+ "requests": [
+  {
+   "method": "POST",
+   "url": "https://onlineservice-api.zhihuishu.com/gateway/t/v1/student/course/share/queryShareCourseInfo",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "150",
+    "content-type": "application/x-www-form-urlencoded",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "form": [
+     [
+      "secretStr",
+      "WfVMxjgojI3YD42VEPxTNoLB7Bn7yFINARakTWs7XEocJNEa5/4Fb5dc8l0AZXjLMAvQaDIGjZPBLpY/aZzkPGmfsrTPm8Ov1WKnneDfPFc="
+     ],
+     [
+      "dateFormate",
+      "1760000000000"
+     ]
+    ]
+   },
+   "secret": {
+    "key": "home",
+    "plain": "{\"status\": 0, \"pageNo\": 1, \"pageSize\": 5, \"dateFormate\": 1760000000000}"
+   }
+  },
+  {
+   "method": "POST",
+   "url": "https://onlineservice-api.zhihuishu.com/gateway/t/v1/student/course/share/queryShareCourseInfo",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "148",
+    "content-type": "application/x-www-form-urlencoded",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "form": [
+     [
+      "secretStr",
+      "WfVMxjgojI3YD42VEPxTNjID8JkFNc6s9xDailBu8eK7XE9YMLwRccBVf5rU4M6W2FtH1BVoqIiXdbew7gzY4rWo878wvbj+3zgxyUqFvJ4="
+     ],
+     [
+      "dateFormate",
+      "1760000000000"
+     ]
+    ]
+   },
+   "secret": {
+    "key": "home",
+    "plain": "{\"status\": 0, \"pageNo\": 2, \"pageSize\": 5, \"dateFormate\": 1760000000000}"
+   }
+  },
+  {
+   "method": "GET",
+   "url": "https://hikeservice.zhihuishu.com/student/course/aided/getMyCourseList",
+   "query": [
+    [
+     "uuid",
+     "U-fake-0001"
+    ],
+    [
+     "data",
+     "<volatile>"
+    ]
+   ],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": null
+  },
+  {
+   "method": "POST",
+   "url": "https://onlineservice-api.zhihuishu.com/gateway/t/v1/student/queryStudentAICourseList",
+   "query": [],
+   "headers": {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-GB,en;q=0.9",
+    "content-length": "102",
+    "content-type": "application/x-www-form-urlencoded",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "macOS",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+   },
+   "cookies": [
+    "CASLOGC",
+    "CASTGC",
+    "exitRecod_U-fake-0001"
+   ],
+   "timeout": 10,
+   "allow_redirects": true,
+   "stream": false,
+   "body": {
+    "form": [
+     [
+      "secretStr",
+      "ADfT6M1QLiNhPZPPbDyptvSoY5nE9N8xhDgKMn+3UwiX8vuzpJo5FCgqzInH3y8V"
+     ],
+     [
+      "dateFormate",
+      "1760000000000"
+     ]
+    ]
+   },
+   "secret": {
+    "key": "home",
+    "plain": "{\"status\": 3, \"dateFormate\": 1760000000000}"
+   }
+  }
+ ],
+ "background": {
+  "counts": {},
+  "heartbeat": []
+ }
+}

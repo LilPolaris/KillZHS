@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "killzhs"
+dynamic = ["version"]
+description = "智慧树 / 知到本地网页学习工作台"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = ["requests", "pycryptodome", "openai", "tiktoken", "pydantic>=2"]
+
+[project.scripts]
+killzhs = "killzhs.__main__:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "killzhs.VERSION" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "I", "UP"]
+ignore = ["E501", "B008"]

@@ -1,26 +1,117 @@
-name: Build Windows ZIP
+name: Build Windows ZIP and installer
+
 on:
   workflow_dispatch:
+    inputs:
+      python-version:
+        description: Windows x64 Python version
+        required: true
+        type: choice
+        default: '3.14'
+        options: ['3.12', '3.14']
+
 permissions:
   contents: read
+
 jobs:
   build:
     runs-on: windows-latest
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUTF8: '1'
+      TIKTOKEN_CACHE_DIR: ${{ github.workspace }}/.local/tokenizer
+      INNO_SETUP_VERSION: '6.7.3'
+      INNO_SETUP_SHA256: '9c73c3bae7ed48d44112a0f48e66742c00090bdb5bef71d9d3c056c66e97b732'
+      INNO_CHINESE_SHA256: '7d544b9bb1d142cfa11f2e5d3cc8abe2e55f8e066c5124e3772675aa236e1278'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.14'
+          python-version: ${{ inputs.python-version }}
+          architecture: x64
           cache: pip
           cache-dependency-path: |
             requirements-lock.txt
             requirements-build-lock.txt
-      - run: python -m pip install -r requirements-build-lock.txt
-      - run: python -m unittest discover -s tests -v
-      - run: python scripts/build_windows.py
+            requirements-dev.txt
+      - name: Prepare CI environment
+        run: python -m pip install -r requirements-build-lock.txt -r requirements-dev.txt
+      - name: Validate dependency locks without changes
+        run: python -B scripts/lock_dependencies.py --check
+      - name: Check Python
+        run: python -m ruff check src scripts tests
+      - name: Fetch verified public tokenizer data before offline tests
+        shell: pwsh
+        run: |
+          @'
+          import hashlib
+          from pathlib import Path
+          import urllib.request
+          from scripts.build_windows import TOKENIZER_URL, TOKENIZER_NAME, TOKENIZER_SHA256
+          data = urllib.request.urlopen(TOKENIZER_URL, timeout=60).read()
+          if hashlib.sha256(data).hexdigest() != TOKENIZER_SHA256:
+              raise RuntimeError('Public tokenizer checksum mismatch')
+          cache = Path('.local/tokenizer')
+          cache.mkdir(parents=True, exist_ok=True)
+          (cache / TOKENIZER_NAME).write_bytes(data)
+          '@ | python -B -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Run offline tests
+        run: python -B -m pytest
+      - name: Prepare CI browser
+        run: python -m playwright install chromium
+      - name: Run offline browser fixture smoke
+        run: python -B scripts/browser_smoke.py
+      - name: Verify all release inputs
+        run: python -B scripts/build_windows.py --check
+      - name: Build offline Windows bundle
+        run: python -B scripts/build_windows.py
+      - name: Verify frozen demo, spawned worker and clean shutdown
+        shell: pwsh
+        run: |
+          $releaseManifest = Get-Content -LiteralPath output/release/latest-build.json -Raw | ConvertFrom-Json
+          $releaseExecutable = Join-Path $releaseManifest.bundle 'KillZHS.exe'
+          python -B scripts/verify_release.py --exe $releaseExecutable --output output/acceptance/frozen.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Provision pinned official Inno Setup compiler in portable mode
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $compilerRoot = Join-Path $env:GITHUB_WORKSPACE '.local/tools/inno'
+          $setupPath = Join-Path $env:RUNNER_TEMP "innosetup-$env:INNO_SETUP_VERSION.exe"
+          # Fixed release and checksum; no latest resolution or package-manager upgrade.
+          $releaseTag = 'is-' + $env:INNO_SETUP_VERSION.Replace('.', '_')
+          $setupUrl = "https://github.com/jrsoftware/issrc/releases/download/$releaseTag/innosetup-$env:INNO_SETUP_VERSION.exe"
+          Invoke-WebRequest -Uri $setupUrl -OutFile $setupPath
+          if ((Get-FileHash -LiteralPath $setupPath -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:INNO_SETUP_SHA256) {
+            throw 'Inno Setup official release checksum mismatch'
+          }
+          $signature = Get-AuthenticodeSignature -LiteralPath $setupPath
+          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'CN=Pyrsys B\.V\.') {
+            throw 'Inno Setup official publisher signature mismatch'
+          }
+          $setupArgs = @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-', '/PORTABLE=1', "/DIR=`"$compilerRoot`"")
+          $setupProcess = Start-Process -FilePath $setupPath -ArgumentList $setupArgs -WindowStyle Hidden -Wait -PassThru
+          if ($setupProcess.ExitCode -ne 0) { throw "Inno Setup portable extraction failed: $($setupProcess.ExitCode)" }
+          if (-not (Test-Path -LiteralPath (Join-Path $compilerRoot 'ISCC.exe'))) { throw 'Missing ISCC.exe' }
+          # This user-contributed translation is in the official 6.7.3 source tag,
+          # but is not included in the binary distribution's Languages folder.
+          $languagePath = Join-Path $compilerRoot 'Languages/ChineseSimplified.isl'
+          $languageUrl = "https://raw.githubusercontent.com/jrsoftware/issrc/$releaseTag/Files/Languages/Unofficial/ChineseSimplified.isl"
+          Invoke-WebRequest -Uri $languageUrl -OutFile $languagePath
+          if ((Get-FileHash -LiteralPath $languagePath -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:INNO_CHINESE_SHA256) {
+            throw 'Inno Setup Chinese translation checksum mismatch'
+          }
+      - name: Check installer inputs without changing artifacts
+        run: python -B scripts/build_installer.py --check
+      - name: Build installer and add its own checksum to release metadata
+        run: python -B scripts/build_installer.py --update-manifest
       - uses: actions/upload-artifact@v4
         with:
-          name: KillZHS-windows-x64
+          name: KillZHS-windows-x64-python-${{ inputs.python-version }}
+          if-no-files-found: error
           path: |
-            output/release/*.zip
-            output/release/SHA256SUMS.txt
+            output/release/**/*.zip
+            output/release/**/SHA256SUMS.txt
+            output/installers/**/*.exe
+            output/installers/**/SHA256SUMS.txt
