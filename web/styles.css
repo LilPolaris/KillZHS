@@ -2683,6 +2683,18 @@ input:not([type=checkbox]),select {
 .plan-courses-heading h3 { font-size:13px; margin:0; font-weight:500; }
 .plan-course { display:flex; align-items:center; gap:12px; padding:14px 27px; border-top:1px solid #f1f3ed; font-size:13px; cursor:pointer; }
 .plan-course>.badge { margin-left:auto; }
+.verification-panel { padding:22px 26px; margin-bottom:24px; border:1px solid #dac494; border-radius:16px; background:#fff9eb; color:#5b513b; }
+.verification-panel h2 { margin:0 0 8px; font-size:17px; }
+.verification-panel p { margin:6px 0; font-size:13px; line-height:1.7; overflow-wrap:anywhere; }
+.verification-actions { display:flex; flex-wrap:wrap; gap:10px; margin:16px 0 10px; }
+.verification-actions a { text-decoration:none; }
+.verification-actions a[aria-disabled=true] { opacity:.55; cursor:wait; }
+.verification-panel .verification-note { font-size:12px; color:#83765c; }
+@media(max-width:500px) {
+  .verification-panel { padding:18px; }
+  .verification-actions { flex-direction:column; }
+  .verification-actions .button { width:100%; white-space:normal; }
+}
 .history-panel { margin-top:24px; }
 .notification-events { border:0; border-top:1px solid var(--line); padding:22px 27px; margin:0; }
 .notification-events legend { font-size:13px; }

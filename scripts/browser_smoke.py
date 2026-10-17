@@ -59,6 +59,41 @@ def main():
                     page.wait_for_function("() => state.logs.some(row => row.message.includes('测试通知已模拟')) && !pending")
                     assert "offline-browser-test-token" not in page.request.get(
                         f"http://127.0.0.1:{server.server_port}/api/state").text()
+                    original_demo = controller.run_demo
+
+                    def verification_demo(payload):
+                        controller.event({"type": "course", "key": "zhidao:demo01", "status": "done"})
+                        controller.event({"type": "course", "key": "zhidao:demo02", "status": "attention"})
+                        controller.event({"type": "result", "reason": "verification", "error": True,
+                                          "message": "需要手动验证，本批次已停止。"})
+
+                    controller.run_demo = verification_demo
+                    page.locator("a[data-view=overview]").click()
+                    page.locator("#start").click()
+                    page.wait_for_function("() => state.status === 'error' && state.verification")
+                    assert page.locator("#verification-panel").is_visible()
+                    assert page.locator("#open-verification").get_attribute("href") == (
+                        "https://studyvideoh5.zhihuishu.com/stuStudy?recruitAndCourseId=demo02")
+                    external = []
+                    page.route("https://**/*", lambda route: (external.append(route.request.url), route.abort()))
+                    page.locator("#open-verification").click()
+                    assert not external
+                    page.reload()
+                    page.wait_for_function("() => connected && state.verification && selected.size === 3")
+                    assert page.locator("#task-status").inner_text() == "等待验证"
+                    page.screenshot(path=str(output / "verification-desktop.png"), full_page=True)
+                    page.set_viewport_size({"width": 390, "height": 844})
+                    page.screenshot(path=str(output / "verification-mobile.png"), full_page=True)
+                    assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1")
+                    page.set_viewport_size({"width": 1440, "height": 1000})
+                    controller.run_demo = original_demo
+                    page.locator("#restart-after-verification").click()
+                    page.wait_for_function("() => state.status === 'running' && !state.verification")
+                    assert len(controller.job_courses) == 3
+                    assert all(row["id"] != "demo01" for row in controller.job_courses)
+                    page.locator("#stop").click()
+                    page.wait_for_function("() => state.status === 'stopped'", timeout=10000)
+                    page.locator("a[data-view=notifications]").click()
                     page.set_viewport_size({"width": 390, "height": 844})
                     page.mouse.move(389, 843)
                     page.screenshot(path=str(output / "notifications-mobile.png"), full_page=True)

@@ -44,6 +44,7 @@ let settingsDirty = false;
 let savedSettingsSignature = "";
 let finishedElapsed = 0;
 let previousStarted = null;
+let verificationIdentity = null;
 
 const statusLabels = { ready: ["待开始", ""], queued: ["排队中", "amber"], running: ["运行中", "green"],
   done: ["已运行", "blue"], attention: ["需要查看", "red"], limited: ["达到时限", "amber"], stopped: ["已停止", ""] };
@@ -197,6 +198,40 @@ $("empty-login").addEventListener("click", () => begin(state?.logged_in || state
 $("refresh").addEventListener("click", () => begin("refresh"));
 $("start").addEventListener("click", () => begin("start"));
 $("stop").addEventListener("click", () => action({ action: "stop" }));
+$("open-verification").addEventListener("click", (event) => {
+  if (!connected || pending || state?.status === "running" || !state?.verification || state.demo) {
+    event.preventDefault();
+    if (state?.demo) toast("演示模式：这里只展示验证入口，不打开真实课程。");
+  }
+});
+$("restart-after-verification").addEventListener("click", () => {
+  const known = new Set((state?.courses || []).map(keyOf));
+  const keys = (state?.verification?.course_keys || []).filter((key) => known.has(key));
+  if (!keys.length) { toast("课程清单已变化，请先同步并重新选择课程。", true); return; }
+  selected = new Set(keys);
+  renderCourses(true);
+  begin("start");
+});
+
+function renderVerification() {
+  const verification = state?.verification;
+  $("verification-panel").hidden = !verification;
+  if (!verification) { verificationIdentity = null; return; }
+  const identity = JSON.stringify([verification.task_id, verification.course_keys]);
+  if (identity !== verificationIdentity) {
+    verificationIdentity = identity;
+    if (!selected.size) selected = new Set(verification.course_keys);
+  }
+  const disabled = !connected || pending || state.status === "running";
+  const known = new Set(state.courses.map(keyOf));
+  const canRestart = verification.course_keys.some((key) => known.has(key));
+  $("verification-course").textContent = verification.course_name ? "当前课程：" + verification.course_name : "本次任务已停止，请先在官方页面处理验证。";
+  $("open-verification").href = verification.url;
+  $("open-verification").setAttribute("aria-disabled", String(disabled));
+  $("open-verification").textContent = verification.direct ? "打开当前课程验证 ↗" : "打开知到官方页面 ↗";
+  $("restart-after-verification").disabled = disabled || !canRestart || !(state.logged_in || state.saved_session);
+  $("restart-after-verification").title = canRestart ? "确认已在官方页面完成验证后，按当前设置重新开始本次未完成的课程。" : "课程清单已变化，请先同步并重新选择。";
+}
 
 function updateButtons() {
   const busy = state?.status === "running";
@@ -206,6 +241,7 @@ function updateButtons() {
   $("start").title = !state?.logged_in ? "请先登录并同步课程" : !selected.size ? "请先勾选至少一门课程" : "开始所选课程的学习任务";
   $("stop").hidden = !busy;
   $("stop").disabled = unavailable || Boolean(state?.stop_requested);
+  renderVerification();
   document.querySelectorAll("[data-setting], #settings-form button[type=submit], #quick-settings-form button[type=submit]").forEach((element) => { element.disabled = unavailable || busy; });
   if (typeof renderFeatures === "function") renderFeatures();
 }
@@ -221,12 +257,12 @@ function renderCourses(force = false) {
   const known = new Set(state.courses.map(keyOf));
   selected = new Set([...selected].filter((key) => known.has(key)));
   const visible = visibleCourses();
-  const signature = JSON.stringify([state.courses, [...selected], courseFilter, $("search").value]);
+  const signature = JSON.stringify([state.courses, [...selected], courseFilter, $("search").value, state.verification?.course_key]);
   if (force || courseSignature !== signature) {
     courseSignature = signature;
     $("course-list").innerHTML = visible.map((course, index) => {
       const key = keyOf(course);
-      const [label, color] = statusLabels[course.status] || statusLabels.ready;
+      const [label, color] = state.verification?.course_key === key ? ["需要验证", "red"] : statusLabels[course.status] || statusLabels.ready;
       return `<div class="course-row ${selected.has(key) ? "selected" : ""} ${course.status === "running" ? "running" : ""}">
         <label class="checkbox-wrap"><input class="course-check" type="checkbox" data-key="${escape(key)}" id="course-${index}" aria-label="选择${escape(course.name)}" ${selected.has(key) ? "checked" : ""}></label>
         <label class="course-info" for="course-${index}"><span class="course-cover cover-${index % 4}" aria-hidden="true">${escape(course.name[0] || "课")}</span><span class="course-text"><span class="course-title" title="${escape(course.name)}">${escape(course.name)}</span><span class="course-meta">${state.demo ? "演示课程" : "ID"} · ${escape(course.id)}</span></span></label>
@@ -259,7 +295,7 @@ $("course-list").addEventListener("change", (event) => {
   if (event.target.checked) selected.add(key); else selected.delete(key);
   // Preserve keyboard focus instead of replacing the active row.
   event.target.closest(".course-row").classList.toggle("selected", event.target.checked);
-  courseSignature = JSON.stringify([state.courses, [...selected], courseFilter, $("search").value]);
+  courseSignature = JSON.stringify([state.courses, [...selected], courseFilter, $("search").value, state.verification?.course_key]);
   renderCourses();
 });
 $("select-all").addEventListener("change", (event) => {
@@ -382,11 +418,11 @@ function render() {
   $("login-title").textContent = hasQR ? "打开知到 App，扫一扫" : state.logged_in ? "账号已连接，准备就绪" : "连接你的知到账号";
   $("login-description").innerHTML = hasQR ? "扫码后请在手机上确认<br>二维码过期后会自动刷新" : state.demo ? "当前所有课程和运行均为本地模拟<br>不会连接真实账号" : state.logged_in ? "选择想学的课程，就可以开始了<br>需要换账号时可重新扫码" : "使用知到 App 扫码登录<br>已有登录状态可直接尝试同步";
   $("login-button-label").textContent = busy && state.action === "login" ? "等待扫码确认…" : state.logged_in ? "重新扫码登录" : "扫码登录";
-  const taskLabel = state.stop_requested ? "正在收尾" : { idle: "等待开始", running: state.action === "start" ? "正在学习" : state.action === "login" ? "正在登录" : "正在同步", done: "任务已结束", error: "需要查看", stopped: "已停止", limited: "达到时长" }[state.status] || "等待开始";
+  const taskLabel = state.verification && !busy ? "等待验证" : state.stop_requested ? "正在收尾" : { idle: "等待开始", running: state.action === "start" ? "正在学习" : state.action === "login" ? "正在登录" : "正在同步", done: "任务已结束", error: "需要查看", stopped: "已停止", limited: "达到时长" }[state.status] || "等待开始";
   $("task-status").textContent = taskLabel;
   $("task-status").className = "badge" + (busy ? " green" : state.status === "error" ? " red" : "");
   $("task-message").textContent = state.message;
-  $("stat-task-label").textContent = state.started_at ? taskLabel : "尚未开始任务";
+  $("stat-task-label").textContent = state.started_at || state.verification ? taskLabel : "尚未开始任务";
   $("live-indicator").classList.toggle("active", busy);
   $("stat-done").replaceChildren(document.createTextNode(String(state.courses.filter((course) => course.status === "done").length)), unit("门"));
   $("progress-section").hidden = !state.progress || !busy || state.action !== "start";
@@ -395,6 +431,11 @@ function render() {
     $("progress-number").textContent = state.progress.phase === "waiting" ? `剩余 ${state.progress.remaining} 秒` : `${state.progress.value}%`;
     $("video-progress").hidden = state.progress.phase === "waiting";
     $("video-progress").value = state.progress.value;
+  }
+  renderVerification();
+  if (state.verification && !busy) {
+    $("login-title").textContent = "账号需要完成验证";
+    $("login-description").textContent = "请使用页面上方的验证入口，完成后返回工作台重新开始。";
   }
   renderSettings();
   renderCourses();

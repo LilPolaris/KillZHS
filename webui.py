@@ -17,7 +17,7 @@ import time
 from collections import deque
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlsplit, parse_qs
+from urllib.parse import urlsplit, parse_qs, urlencode
 from urllib.request import urlopen
 import webbrowser
 from uuid import uuid4
@@ -147,6 +147,7 @@ class Controller:
         self.result_status = None
         self.result_reason = None
         self.current = None
+        self.verification = None
         self.message = "准备好后，扫码登录并同步课程。"
         self.dependencies = [name for name, module in MODULES.items() if importlib.util.find_spec(module) is None]
         raw_courses = load_json(self.local / "courses.json", load_json(self.root / "execution.json", []))
@@ -173,6 +174,42 @@ class Controller:
         self.log("本地工作台已就绪。" + (" 当前为演示模式。" if demo else ""))
         if not demo:
             self.recover_history()
+            self.restore_verification()
+
+    def verification_context(self, keys, current=None, task_id=None):
+        known = {course_key(course): course for course in self.courses}
+        keys = list(dict.fromkeys(key for key in keys if isinstance(key, str) and key in known))
+        course = known.get(current) if isinstance(current, str) else None
+        if course is None and len(keys) == 1:
+            course = known[keys[0]]
+        direct = bool(course and course["kind"] == "zhidao")
+        url = ("https://studyvideoh5.zhihuishu.com/stuStudy?" + urlencode({"recruitAndCourseId": course["id"]})
+               if direct else "https://www.zhihuishu.com/")
+        return {"course_key": course_key(course) if course else None,
+                "course_name": course["name"] if course else None, "url": url, "direct": direct,
+                "course_keys": keys, "task_id": task_id}
+
+    def restore_verification(self):
+        # Older releases saved only a message and names. Restore a direct link
+        # only when a name uniquely identifies a course; never reuse a stored URL.
+        row = next((row for row in reversed(self.history) if row.get("action") == "start"), None)
+        if not row:
+            return
+        saved = row.get("verification")
+        if row.get("reason") == "verification" and isinstance(saved, dict):
+            keys = saved.get("course_keys", [])
+            self.verification = self.verification_context(keys if isinstance(keys, list) else [],
+                                                        saved.get("course_key"), row.get("id"))
+        elif row.get("status") == "error" and "需要手动验证" in str(row.get("message", "")):
+            names = row.get("courses", [])
+            if not isinstance(names, list):
+                names = []
+            keys = []
+            for name in names:
+                matches = [course_key(course) for course in self.courses if course["name"] == name]
+                if len(matches) == 1:
+                    keys.append(matches[0])
+            self.verification = self.verification_context(keys, task_id=row.get("id"))
 
     def log(self, message, level="info", *, archive=True):
         with self.lock:
@@ -202,6 +239,7 @@ class Controller:
                 "history_revision": self.history_revision, "deadline": self.deadline,
                 "ai_requests": self.ai_requests, "active_ai_max_requests": self.active_ai_max_requests,
                 "stop_requested": self.stop_requested,
+                "verification": self.verification,
                 "notifications": public_notifications(self.notifications),
                 "app": "KillZHS"}
             if history_revision != self.history_revision:
@@ -286,6 +324,8 @@ class Controller:
                 raise InputError("当前 Python 环境缺少依赖：" + "、".join(self.dependencies) + "。请用项目虚拟环境启动。")
             selected = data.get("courses", [])
             if action == "start":
+                if scheduled and self.verification:
+                    raise InputError("上次任务仍需手动验证，请在工作台打开课程验证后重新开始。")
                 if not self.logged_in and not self.has_session() and not self.demo:
                     raise InputError("请先登录并同步课程。")
                 if not isinstance(selected, list) or not selected or len(selected) > 200:
@@ -308,6 +348,8 @@ class Controller:
             self.active_ai_max_requests = self.ai["max_requests"] if action == "start" else None
             self.result_status, self.ended_at = None, None
             self.result_reason = None
+            if action == "start":
+                self.verification = None
             self.stop_requested = None
             self.stop_file = Path(self.runtime.name) / f"stop-{self.job_id}.json"
             self.qr, self.progress, self.current = None, None, None
@@ -390,6 +432,10 @@ class Controller:
                 self.message = redact(event["message"], self.secrets)
                 self.result_status = event["status"] if event.get("status") in ("stopped", "limited") else "error" if event.get("error") else "done"
                 self.result_reason = event.get("reason") or self.result_reason
+                if self.result_reason == "verification":
+                    remaining = {course_key(course) for course in self.courses if course["status"] != "done"}
+                    keys = [course_key(course) for course in self.job_courses if course_key(course) in remaining]
+                    self.verification = self.verification_context(keys, self.current, self.task_id)
 
     def run_job(self, payload):
         process = None
@@ -500,7 +546,8 @@ class Controller:
         return {"id": self.task_id, "started_at": self.started_at, "ended_at": self.ended_at,
             "action": self.action, "origin": self.origin, "status": self.status,
             "message": self.message, "courses": [c["name"] for c in self.job_courses],
-            "ai_requests": self.ai_requests}
+            "ai_requests": self.ai_requests, "reason": self.result_reason,
+            "verification": copy.deepcopy(self.verification) if self.result_reason == "verification" else None}
 
     def save_history(self):
         self.history_revision = uuid4().hex
