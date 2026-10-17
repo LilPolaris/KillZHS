@@ -41,7 +41,7 @@ def main():
     for name, distribution in sorted(runtime.items()):
         files = []
         for item in distribution.files or []:
-            if item.name.lower().startswith(("license", "copying", "notice")) and ".dist-info" in str(item):
+            if item.name.lower().startswith(("license", "licence", "copying", "notice", "copyright")) and ".dist-info" in str(item):
                 source = Path(distribution.locate_file(item))
                 if source.is_file():
                     info_index = next(i for i, part in enumerate(item.parts) if part.endswith(".dist-info"))

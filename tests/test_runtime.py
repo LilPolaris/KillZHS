@@ -152,6 +152,7 @@ class VideoLoopsTest(unittest.TestCase):
         import utils
         real_path = utils.getRealPath
         log_dir = Path(__file__).resolve().parents[1] / ".local" / "unit-logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
         with patch.object(utils, "getRealPath", side_effect=lambda value: str(log_dir) if str(value).strip("./") == "logs" else real_path(value)):
             import fucker
         cls.legacy = fucker
