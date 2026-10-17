@@ -124,6 +124,8 @@ class SchedulingTest(unittest.TestCase):
         first_id = self.controller.job_id
         process = self.wait_for_process()
         self.controller.expire(first_id)
+        self.assertEqual(self.controller.stop_requested, "limited")
+        self.controller.stop(reason="limited", expected_job=first_id, force=True)
         self.assertEqual(self.controller.status, "limited")
         self.assertIsNotNone(process.poll())
         self.assertEqual(self.controller.history[-1]["status"], "limited")

@@ -174,7 +174,7 @@ $("settings-form").addEventListener("submit", saveSettings);
 $("reset-settings").addEventListener("click", () => {
   if (!state) return;
   const previous = state.settings;
-  state.settings = { speed: null, limit: 0, threshold: 0.91, remember: true, budget_minutes: 0 };
+  state.settings = structuredClone(state.defaults);
   renderSettings(true);
   state.settings = previous;
   settingsDirty = true;
@@ -205,7 +205,7 @@ function updateButtons() {
   $("start").disabled = unavailable || busy || !state?.logged_in || !selected.size;
   $("start").title = !state?.logged_in ? "请先登录并同步课程" : !selected.size ? "请先勾选至少一门课程" : "开始所选课程的学习任务";
   $("stop").hidden = !busy;
-  $("stop").disabled = unavailable;
+  $("stop").disabled = unavailable || Boolean(state?.stop_requested);
   document.querySelectorAll("[data-setting], #settings-form button[type=submit], #quick-settings-form button[type=submit]").forEach((element) => { element.disabled = unavailable || busy; });
   if (typeof renderFeatures === "function") renderFeatures();
 }
@@ -382,7 +382,7 @@ function render() {
   $("login-title").textContent = hasQR ? "打开知到 App，扫一扫" : state.logged_in ? "账号已连接，准备就绪" : "连接你的知到账号";
   $("login-description").innerHTML = hasQR ? "扫码后请在手机上确认<br>二维码过期后会自动刷新" : state.demo ? "当前所有课程和运行均为本地模拟<br>不会连接真实账号" : state.logged_in ? "选择想学的课程，就可以开始了<br>需要换账号时可重新扫码" : "使用知到 App 扫码登录<br>已有登录状态可直接尝试同步";
   $("login-button-label").textContent = busy && state.action === "login" ? "等待扫码确认…" : state.logged_in ? "重新扫码登录" : "扫码登录";
-  const taskLabel = { idle: "等待开始", running: state.action === "start" ? "正在学习" : state.action === "login" ? "正在登录" : "正在同步", done: "任务已结束", error: "需要查看", stopped: "已停止", limited: "达到时长" }[state.status] || "等待开始";
+  const taskLabel = state.stop_requested ? "正在收尾" : { idle: "等待开始", running: state.action === "start" ? "正在学习" : state.action === "login" ? "正在登录" : "正在同步", done: "任务已结束", error: "需要查看", stopped: "已停止", limited: "达到时长" }[state.status] || "等待开始";
   $("task-status").textContent = taskLabel;
   $("task-status").className = "badge" + (busy ? " green" : state.status === "error" ? " red" : "");
   $("task-message").textContent = state.message;
@@ -408,9 +408,14 @@ async function fetchState() {
   if (fetching) return fetching;
   fetching = (async () => {
     try {
-      const response = await fetch("/api/state", { cache: "no-store", signal: AbortSignal.timeout(5000) });
+      const query = state ? "?" + new URLSearchParams({ since: state.log_cursor, history_revision: state.history_revision }) : "";
+      const response = await fetch("/api/state" + query, { cache: "no-store", signal: AbortSignal.timeout(5000) });
       if (!response.ok) throw new Error("服务不可用");
       const next = await response.json();
+      if (state && state.token === next.token) {
+        if (!next.logs_reset) next.logs = [...state.logs, ...next.logs].slice(-600);
+        if (!Object.hasOwn(next, "history")) next.history = state.history;
+      }
       if (state && state.token !== next.token) {
         selected.clear();
         settingsDirty = false;

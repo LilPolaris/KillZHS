@@ -1,5 +1,6 @@
 from zd_utils import Cipher, getEv, WatchPoint, HOME_KEY, VIDEO_KEY, QA_KEY, AI_KEY, EXAM_KEY
 from utils import progressBar, HMS, wipeLine, list_to_cookie_jar, getRealPath
+from killzhs_runtime import finish_on_stop
 from urllib.parse import unquote_plus as unquote
 from requests.adapters import HTTPAdapter, Retry
 from requests.cookies import RequestsCookieJar
@@ -105,6 +106,7 @@ class Fucker:
         logger.debug(f'headers: {self.headers}')
 
         self.limit = abs(limit)                    # time limit for fucking, in minutes
+        self.task_control = None                  # Optional local-UI cancellation hook.
         self.speed = speed and max(speed, 0.1)     # video play speed, Falsy values for default
         self.end_thre = max(end_thre or 0, 0.0) or 0.91 # video play end threshold, above this will be considered as finished
         self.prefix = "  |"                        # prefix for tree view
@@ -485,11 +487,13 @@ class Fucker:
         tprint(prefix)
         tprint(f"\r{prefix}__Fucked course {course.courseInfo.name}, cost {time.time()-begin_time:.2f}s\n")
     
+    @finish_on_stop
     def fuckZhidaoVideo(self, RAC_id, video_id):
         """
         * `RAC_id`: `recruitAndCourseId`
         * `video_id`: `videoId`
         """
+        self._checkStop()
         self._checkCookies()
         self._checkTimeLimit(RAC_id)
         ctx = self.getZhidaoContext(RAC_id)
@@ -536,9 +540,17 @@ class Fucker:
         pause = 0           # pause flag, do not modify
         wp = WatchPoint()   # watch point, do not modify
 
+        def flush_progress():
+            if played_time > last_submit:
+                wp.add(played_time)
+                self.saveDatabaseIntervalTimeV2(RAC_id, video_id, played_time, last_submit, wp.get(), token_id)
+        self._stop_flush = flush_progress
+
         ##### start main event loop, sort of...
         while played_time < end_time:
+            self._checkStop()
             time.sleep(1)
+            self._checkStop()
             ctx.fucked_time += 1 # for time limit check
             elapsed_time += 1
             played_time = min(played_time+speed, end_time) # update video time and make sure not exceeding end_time
@@ -907,7 +919,9 @@ class Fucker:
         tprint(prefix)
         tprint(f"{prefix}__Fucked course {course_id}, cost {time.time()-begin_time:.2f}s\n")
 
+    @finish_on_stop
     def fuckHikeVideo(self, course_id, file_id, prev_time=0):
+        self._checkStop()
         self._checkCookies()
         self._checkTimeLimit(course_id)
         logger.info(f"Fucking Hike video {file_id} of course {course_id}")
@@ -927,9 +941,16 @@ class Fucker:
         interval = 30              # interval between 2 progess reports
         end_time = max(total_time*self.end_thre, 1.0)
         played_time = prev_time    # total video played time
+
+        def flush_progress():
+            if played_time > prev_time:
+                self.saveStuStudyRecord(course_id, file_id, played_time, prev_time, start_date)
+        self._stop_flush = flush_progress
         # start main loop
-        while played_time <= end_time:
+        while played_time < end_time:
+            self._checkStop()
             time.sleep(1)
+            self._checkStop()
             ctx.fucked_time += 1
             played_time = min(played_time+speed, end_time)
             # enter branch when video is finished or interval is reached
@@ -946,6 +967,7 @@ class Fucker:
         time.sleep(random()*2+1) # more human-like
 
     def _traverse(self,course_id, node: ObjDict, depth=0):
+        self._checkStop()
         depth += 1
         tprint = print if self.tree_view else lambda *a, **k: None
         try:
@@ -1106,6 +1128,10 @@ class Fucker:
         if self.limit and self.context[cid].fucked_time >= self.limit*60:
             raise TimeLimitExceeded(f"{self.limit} minutes")
 
+    def _checkStop(self):
+        if self.task_control is not None:
+            self.task_control.check()
+
     def _sessionReady(self, ctx:dict=None):
         ctx = ObjDict(ctx or {}, recursive=False, default=False)
         self.session.cookies = ctx.cookies or self.cookies.copy()
@@ -1221,6 +1247,7 @@ class Fucker:
         """
         ### 观看智慧树AI视频
         """
+        self._checkStop()
         # 取得视频长度
         url = "https://kg-ai-run.zhihuishu.com/run/gateway/t/stu/resources-lab/get-video-time"
         self._checkCookies()
@@ -1241,6 +1268,7 @@ class Fucker:
         played_time = startAt
         # 开始观看
         while played_time < video_length:
+            self._checkStop()
             # 上传视频观看进度
             played_time = min(
                 int(round(played_time + (self.speed or 1.5) * 2)), video_length)
@@ -1288,6 +1316,7 @@ class Fucker:
 
         # 遍历主题
         for theme in cakeThemeList:
+            self._checkStop()
             tprint(prefix)  # extra line as separator
             tprint(f"{prefix}__Fucking theme {theme.themeName}"[:w_lim])
             # 取得知识点列表
@@ -1302,6 +1331,7 @@ class Fucker:
 
             # 遍历知识点
             for knowledge in knowledgeList:
+                self._checkStop()
                 ppts = []
                 ppt_conf = aiConfig.get("ppt_processing", {})
                 moonShot_conf = ppt_conf.get("moonShot", {})
@@ -1323,6 +1353,7 @@ class Fucker:
                         continue
                     # 遍历资源
                     for resource in resourceList:
+                        self._checkStop()
                         time.sleep(randint(1, 10) * 0.2)  # random delay
                         tprint(prefix*3)  # extra line as separator
                         tprint(
@@ -1440,6 +1471,7 @@ class Fucker:
                 # 开始测试部分
                 tried_count = 0
                 while True:
+                    self._checkStop()
                     if no_exam:
                         break
 

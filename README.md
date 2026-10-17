@@ -6,7 +6,7 @@
 基于 [VermiIIi0n/fuckZHS](https://github.com/VermiIIi0n/fuckZHS) 二次开发。
 原作者版权与 MIT 许可证完整保留，改动说明见 [NOTICE.md](NOTICE.md)。
 
-**当前为 `0.1.0-beta.3` 测试版。** 已完成离线测试、浏览器操作及 Windows 打包检查；
+**当前为 `0.1.0-beta.4` 测试版。** 已完成离线测试、浏览器操作及 Windows 打包检查；
 已有本机真实扫码与共享课启动记录，完整课程完成情况、AI 课程及模型生成仍需进一步验证。
 本地“已运行”不等于平台认定课程已完成，实际结果以平台为准。
 
@@ -36,6 +36,8 @@
 - AI 生成请求上限包含失败重试，达到上限停止任务；该上限不代表金额预算。
 - 每日计划：选择时间、星期、课程和总时长，默认 30 分钟。
 - 按整批任务的实际经过时间控制总时长，包含课程切换与网络等待。
+- 到时或点击停止后先请求收尾，尝试提交未上报的进度，最多等待 30 秒；卡住时强制终止。
+- 网页状态按游标读取新增日志，历史记录未变化时不重复传输；收尾期间仍可查看状态。
 - 同一天最多自动触发一次，重复启动受到实例锁保护。
 - 最近 100 次任务历史及按次保存的脱敏日志，可查看和下载；每次最多 2 MB。
 - 异常退出后恢复上次任务记录为“意外中断”，保留退出前已写入的日志。
@@ -65,7 +67,7 @@ PPT 处理单独配置文件服务。开启后相关课件会上传到该服务�
 例如：每天 20:00 运行所选课程，**所有课程合计最多运行 30 分钟**。
 按电脑本地时间执行，程序保持后台运行、电脑开机联网且登录有效时才可执行。
 
-- 到时结束当前批次；进度取决于平台最近一次接收的记录，下次从平台已有进度继续。
+- 到时停止继续处理课程，先收尾再结束，最多额外等待 30 秒；实际进度以平台接收为准。
 - 默认错过时间不补跑；可设置 1–720 分钟的补跑窗口，窗口内恢复运行时尝试一次，跨天不补跑。
 - 该时刻有其他任务运行时跳过并记入历史，不会在现有任务结束后自动重试。
 - 当天的尝试会先保存，重新启动程序不会重复触发同一天的计划。
@@ -103,7 +105,7 @@ Windows 发布版使用 `%LOCALAPPDATA%\KillZHS` 保存配置、Cookie、计划�
 
 ```powershell
 python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements-lock.txt
 .\.venv\Scripts\python.exe killzhs.py --desktop
 ```
 
@@ -125,12 +127,27 @@ python killzhs.py --headless --no-browser
 
 ```powershell
 python -m unittest discover -s tests -v
-python -m pip install -r requirements-build.txt
+python -m pip install -r requirements-build-lock.txt
 python scripts/build_windows.py
 ```
 
 Windows 包需要在 Windows 上构建。产物位于 `output/release`，附带 SHA-256 校验值。
 构建脚本使用明确的资源清单，不包含开发者的配置、Cookie、模型密钥或运行记录。
+运行与构建依赖使用锁定文件；构建前会核对已安装版本，许可证从运行依赖关系自动收集，
+并附带版本与许可证文件清单。刷新锁定文件使用 `python scripts/lock_dependencies.py`，
+该命令只读取当前环境，不安装或升级软件。版本锁定不代表 ZIP 字节完全可复现。
+
+CI 在 Python 3.12 / 3.14 检查基础静态错误、JavaScript 语法及离线测试，
+并在 3.14 运行隔离演示环境下的浏览器流程。手动执行网页检查：
+
+```powershell
+python -m pip install -r requirements-dev.txt
+python -m playwright install chromium
+python scripts/browser_smoke.py
+```
+
+首次审查的逐项进度见 [审查落实情况](docs/REVIEW_STATUS.md)，
+倍速与耗时的边界见 [速度分析](docs/PERFORMANCE.md)。
 
 ## 来源与许可
 

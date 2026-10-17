@@ -2,11 +2,12 @@
 
 import hashlib
 import importlib.util
-from importlib import metadata
+import json
 import os
 from pathlib import Path
 import shutil
 import sys
+import tempfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -22,6 +23,9 @@ def main():
         sys.path.insert(0, str(local_tools))
     if importlib.util.find_spec("PyInstaller") is None:
         raise SystemExit("Install requirements-build.txt in the build environment first.")
+    from dependency_tools import dependency_closure, requirement_lines
+    runtime = dependency_closure(requirement_lines(ROOT / "requirements-lock.txt"))
+    dependency_closure(requirement_lines(ROOT / "requirements-build-lock.txt"))
     build = ROOT / ".local" / "build"
     release = ROOT / "output" / "release"
     distribution_dir = release / VERSION
@@ -32,24 +36,22 @@ def main():
     import tiktoken
     tiktoken.get_encoding("cl100k_base")
     # Collect license files from the installed runtime distributions.
-    licenses = build / "third-party-licenses"
-    licenses.mkdir(parents=True, exist_ok=True)
-    names = ("requests", "urllib3", "idna", "certifi", "charset-normalizer", "Pillow",
-             "pycryptodome", "tiktoken", "regex", "openai", "anyio", "distro", "httpx",
-             "httpcore", "sniffio", "pydantic", "pydantic_core", "typing_extensions",
-             "typing-inspection", "jiter", "annotated-types", "h11", "tqdm", "colorama")
-    for name in names:
-        try:
-            distribution = metadata.distribution(name)
-        except metadata.PackageNotFoundError:
-            continue
+    licenses = Path(tempfile.mkdtemp(prefix="third-party-licenses-", dir=build))
+    inventory = []
+    for name, distribution in sorted(runtime.items()):
+        files = []
         for item in distribution.files or []:
             if item.name.lower().startswith(("license", "copying", "notice")) and ".dist-info" in str(item):
                 source = Path(distribution.locate_file(item))
                 if source.is_file():
-                    target = licenses / name / item.name
+                    info_index = next(i for i, part in enumerate(item.parts) if part.endswith(".dist-info"))
+                    relative = Path(*item.parts[info_index + 1:])
+                    target = licenses / name / relative
                     target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copyfile(source, target)
+                    files.append(relative.as_posix())
+        inventory.append({"name": name, "version": distribution.version, "license_files": files})
+    (licenses / "inventory.json").write_text(json.dumps(inventory, indent=2), encoding="utf-8")
     from PyInstaller.__main__ import run
     run([str(ROOT / "killzhs.py"), "--name", "KillZHS", "--onedir", "--windowed", "--noconfirm",
          "--distpath", str(distribution_dir), "--workpath", str(build / "work"), "--specpath", str(build),

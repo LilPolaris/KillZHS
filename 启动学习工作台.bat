@@ -1,9 +1,4 @@
 @echo off
 chcp 65001 >nul
-cd /d "%~dp0"
-if exist ".venv\Scripts\python.exe" (
-  ".venv\Scripts\python.exe" webui.py
-) else (
-  python webui.py
-)
-if errorlevel 1 pause
+rem Compatibility entry: use the same desktop launcher as KillZHS.
+call "%~dp0启动KillZHS.bat"

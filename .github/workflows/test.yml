@@ -17,5 +17,20 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           cache: pip
-      - run: python -m pip install -r requirements.txt
+          cache-dependency-path: |
+            requirements-lock.txt
+            requirements-dev.txt
+      - run: python -m pip install -r requirements-lock.txt -r requirements-dev.txt
+      - run: ruff check --select F821,F822,F823 killzhs.py killzhs_config.py killzhs_runtime.py killzhs_notifications.py killzhs_privacy.py killzhs_tasklogs.py webui.py webui_worker.py scripts tests
+      - run: node --check web/app.js
+      - run: node --check web/features.js
       - run: python -m unittest discover -s tests -v
+      - run: python -m playwright install chromium
+        if: matrix.python == '3.14'
+      - run: python scripts/browser_smoke.py
+        if: matrix.python == '3.14'
+      - uses: actions/upload-artifact@v4
+        if: failure() && matrix.python == '3.14'
+        with:
+          name: offline-browser-diagnostics
+          path: output/playwright/smoke/

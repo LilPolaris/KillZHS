@@ -1,0 +1,6 @@
+# Development / CI only. Not included in the Windows runtime.
+playwright==1.60.0
+pyee==13.0.1
+greenlet==3.5.1
+packaging==26.3
+ruff==0.17.1

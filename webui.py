@@ -17,20 +17,20 @@ import time
 from collections import deque
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, parse_qs
 from urllib.request import urlopen
 import webbrowser
 from uuid import uuid4
-from killzhs_config import (AI_DEFAULTS, PLAN_DEFAULTS, VERSION, InputError,
+from killzhs_config import (AI_DEFAULTS, PLAN_DEFAULTS, DEFAULTS, VERSION, InputError,
                            public_ai, validate_ai, validate_plan, next_run)
 from killzhs_notifications import Notifier, validate_notifications, public_notifications
 from killzhs_privacy import collect_secrets, redact
 from killzhs_tasklogs import TaskLogs
+from killzhs_runtime import STOP_GRACE_SECONDS, TaskControl, TaskStopped
 
 ROOT = Path(__file__).resolve().parent
 ASSETS = ROOT / "web"
 PREFIX = "@@ZHS_WEB@@"
-DEFAULTS = {"speed": None, "limit": 0, "threshold": 0.91, "remember": True, "budget_minutes": 0}
 MODULES = {"requests": "requests", "Pillow": "PIL", "pycryptodome": "Crypto",
            "OpenAI": "openai", "tiktoken": "tiktoken"}
 
@@ -105,6 +105,8 @@ class Controller:
         self.archive_failed = False
         self.watchdog = None
         self.deadline = None
+        self.stop_file = None
+        self.stop_requested = None
         self.job_courses = []
         self.origin = "manual"
         self.token = secrets.token_urlsafe(32)
@@ -129,6 +131,7 @@ class Controller:
         if not isinstance(self.history, list):
             self.history = []
         self.history = [row for row in self.history if isinstance(row, dict)][-100:]
+        self.history_revision = uuid4().hex
         schedule_state = load_json(self.local / "schedule-state.json", {})
         self.last_schedule_date = schedule_state.get("date") if isinstance(schedule_state, dict) else None
         self.courses = []
@@ -184,19 +187,26 @@ class Controller:
                     self.archive_failed = True
                     self.log("无法保存本次详细日志，请检查用户目录权限或剩余空间。", "warning", archive=False)
 
-    def state(self):
+    def state(self, since=None, history_revision=None):
         with self.lock:
-            return copy.deepcopy({"token": self.token, "demo": self.demo, "status": self.status,
+            logs_reset = since is None or since > self.sequence or (self.logs and since < self.logs[0]["id"] - 1)
+            logs = list(self.logs) if logs_reset else [row for row in self.logs if row["id"] > since]
+            result = {"token": self.token, "demo": self.demo, "status": self.status,
                 "action": self.action, "logged_in": self.logged_in, "qr": self.qr,
                 "progress": self.progress, "current": self.current, "message": self.message,
                 "started_at": self.started_at, "ended_at": self.ended_at, "settings": self.settings,
-                "courses": self.courses, "logs": list(self.logs), "missing_dependencies": self.dependencies,
+                "courses": self.courses, "logs": logs, "missing_dependencies": self.dependencies,
+                "log_cursor": self.sequence, "logs_reset": bool(logs_reset), "defaults": DEFAULTS,
                 "saved_session": self.has_session(), "version": VERSION, "ai": public_ai(self.ai),
                 "plan": self.plan, "next_run": next_run(self.plan, self.last_schedule_date),
-                "history": list(reversed(self.history)), "deadline": self.deadline,
+                "history_revision": self.history_revision, "deadline": self.deadline,
                 "ai_requests": self.ai_requests, "active_ai_max_requests": self.active_ai_max_requests,
+                "stop_requested": self.stop_requested,
                 "notifications": public_notifications(self.notifications),
-                "app": "KillZHS"})
+                "app": "KillZHS"}
+            if history_revision != self.history_revision:
+                result["history"] = list(reversed(self.history))
+            return copy.deepcopy(result)
 
     def has_session(self):
         return (Path(self.runtime.name) / "cookies.json").is_file() or (self.settings["remember"] and (
@@ -298,6 +308,8 @@ class Controller:
             self.active_ai_max_requests = self.ai["max_requests"] if action == "start" else None
             self.result_status, self.ended_at = None, None
             self.result_reason = None
+            self.stop_requested = None
+            self.stop_file = Path(self.runtime.name) / f"stop-{self.job_id}.json"
             self.qr, self.progress, self.current = None, None, None
             self.started_at = time.time()
             self.task_id, self.archive_failed = uuid4().hex, False
@@ -318,7 +330,8 @@ class Controller:
                     course["status"] = "queued"
             payload = {"action": action, "root": str(self.root), "local": str(self.local),
                        "runtime": self.runtime.name, "settings": copy.deepcopy(self.settings),
-                       "ai": copy.deepcopy(self.ai), "courses": selected}
+                       "ai": copy.deepcopy(self.ai), "courses": selected,
+                       "deadline": self.deadline, "stop_file": str(self.stop_file)}
             if self.deadline:
                 job_id = self.job_id
                 self.watchdog = threading.Timer(max(0, self.deadline - time.time()), self.expire, args=(job_id,))
@@ -371,10 +384,11 @@ class Controller:
                 for course in self.courses:
                     if course_key(course) == event["key"]:
                         course["status"] = event["status"]
-                        self.message = event.get("message", course["name"])
+                        if not self.stop_requested:
+                            self.message = event.get("message", course["name"])
             elif event_type == "result":
                 self.message = redact(event["message"], self.secrets)
-                self.result_status = "error" if event.get("error") else "done"
+                self.result_status = event["status"] if event.get("status") in ("stopped", "limited") else "error" if event.get("error") else "done"
                 self.result_reason = event.get("reason") or self.result_reason
 
     def run_job(self, payload):
@@ -423,6 +437,10 @@ class Controller:
                     if self.result_status is None:
                         self.message = "任务异常结束，请检查 Python 依赖或查看日志。" if process.returncode else "任务已结束。"
                     self.result_status = "error" if process.returncode else self.result_status or "done"
+        except TaskStopped as stopped:
+            with self.lock:
+                self.result_status = stopped.reason
+                self.message = "演示任务已停止并完成收尾，未连接真实平台。"
         except Exception:
             with self.lock:
                 if self.status not in ("stopped", "limited"):
@@ -448,7 +466,8 @@ class Controller:
                 self.log("运行进程清理失败，请退出程序后检查后台进程。", "warning")
             with self.lock:
                 if self.status == "running":
-                    self.status = self.result_status or "done"
+                    self.status = self.stop_requested or self.result_status or "done"
+                self.stop_requested = None
                 self.ended_at = time.time()
                 self.process, self.qr = None, None
                 for course in self.courses:
@@ -484,6 +503,7 @@ class Controller:
             "ai_requests": self.ai_requests}
 
     def save_history(self):
+        self.history_revision = uuid4().hex
         self.history = self.history[-100:]
         if not self.demo:
             atomic_json(self.local / "history.json", self.history)
@@ -597,15 +617,18 @@ class Controller:
             self.notify("skipped", "KillZHS 定时计划已跳过", reason + " 请打开工作台查看计划及登录状态。")
 
     def run_demo(self, payload):
+        control = TaskControl(payload.get("stop_file"), payload.get("deadline"))
         self.log("演示操作：" + payload["action"] + "，不会连接智慧树。")
         if payload["action"] == "start":
             for course in payload["courses"]:
+                control.check()
                 with self.lock:
                     if self.status != "running":
                         return
                     self.event({"type": "course", "key": course_key(course), "status": "running"})
                 for value in range(0, 101, 5):
                     time.sleep(0.18)
+                    control.check()
                     with self.lock:
                         if self.status != "running":
                             return
@@ -619,32 +642,64 @@ class Controller:
             if self.status == "running":
                 self.result_status, self.message = "done", "演示任务已结束，未执行任何真实学习操作。"
 
-    def stop(self, reason="stopped", expected_job=None):
+    def stop(self, reason="stopped", expected_job=None, *, force=False):
         with self.lock:
             if self.status != "running" or (expected_job is not None and expected_job != self.job_id):
                 return
+            job_id, thread = self.job_id, self.thread
+            if self.action == "start" and not force:
+                if self.stop_requested:
+                    return
+                try:
+                    atomic_json(self.stop_file, {"reason": reason})
+                except OSError:
+                    force = True
+                    self.log("无法写入停止请求，将直接终止运行进程。", "warning")
+                if not force:
+                    self.stop_requested = reason
+                    self.message = ("已到总时长" if reason == "limited" else "已请求停止") + f"，正在收尾并尝试保存最后进度，最多等待 {STOP_GRACE_SECONDS} 秒。"
+                    self.log(self.message, "warning")
+                    if self.watchdog:
+                        self.watchdog.cancel()
+                    self.watchdog = threading.Timer(STOP_GRACE_SECONDS,
+                        lambda: self.stop(reason=reason, expected_job=job_id, force=True))
+                    self.watchdog.daemon = True
+                    self.watchdog.start()
+                    return
+            if self.watchdog:
+                self.watchdog.cancel()
             self.status, self.message, self.qr = reason, ("已达到本次总时长，任务已结束。进度以平台最近一次接收为准。" if reason == "limited" else "任务已停止。已提交的平台进度会保留。"), None
+            if self.stop_requested:
+                self.message += " 收尾超时或程序退出，已请求强制结束。"
+            self.stop_requested = None
             self.ended_at = time.time()
             process = self.process
-            if process and process.poll() is None:
+        # Never hold the state lock while waiting for a child process.
+        if process and process.poll() is None:
+            try:
                 process.terminate()
                 try:
                     process.wait(timeout=3)
                 except subprocess.TimeoutExpired:
                     process.kill()
                     process.wait(timeout=3)
+            except (OSError, subprocess.TimeoutExpired):
+                self.log("运行进程未能及时退出，请检查后台进程。", "warning")
+        with self.lock:
+            if self.job_id != job_id:
+                return
             for course in self.courses:
                 if course["status"] in ("running", "queued"):
                     course["status"] = reason
             self.log(self.message, "warning")
-        if self.thread and self.thread is not threading.current_thread():
-            self.thread.join(timeout=4)
+        if thread and thread is not threading.current_thread():
+            thread.join(timeout=4)
 
     def close(self):
         self.closed.set()
         if self.scheduler_thread:
             self.scheduler_thread.join(timeout=2)
-        self.stop()
+        self.stop(force=True)
         if self.thread and self.thread.is_alive() and self.thread is not threading.current_thread():
             self.thread.join(timeout=5)
         self.notifier.close()
@@ -681,7 +736,15 @@ class Handler(BaseHTTPRequestHandler):
             return
         path = urlsplit(self.path).path
         if path == "/api/state":
-            self.send_content(200, self.server.controller.state())
+            query = parse_qs(urlsplit(self.path).query)
+            try:
+                since = int(query["since"][0]) if "since" in query else None
+                if since is not None and since < 0:
+                    raise ValueError()
+            except (ValueError, IndexError):
+                self.send_content(400, {"error": "日志游标格式不正确。"})
+                return
+            self.send_content(200, self.server.controller.state(since, query.get("history_revision", [None])[0]))
             return
         if path.startswith("/api/task-log/"):
             if not secrets.compare_digest(self.headers.get("X-Local-Token", ""), self.server.controller.token):

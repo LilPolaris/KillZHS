@@ -12,6 +12,7 @@ import time
 from webui import PREFIX, atomic_json, course_key, load_json, normalize_course
 from killzhs_config import AI_DEFAULTS
 from killzhs_privacy import collect_secrets, redact as redact_text
+from killzhs_runtime import TaskControl, TaskStopped
 
 OUTPUT = sys.stdout
 SECRETS = set()
@@ -122,6 +123,8 @@ def run(payload):
     settings = payload["settings"]
     client = legacy.Fucker(proxies=config.get("proxies") or {}, speed=settings["speed"],
         limit=int(settings["limit"]), end_thre=settings["threshold"], tree_view=True, progressbar_view=True)
+    control = TaskControl(payload.get("stop_file"), payload.get("deadline"))
+    client.task_control = control
     progress_time = [0.0]
 
     def progress(iteration, total, prefix="", **_):
@@ -210,6 +213,7 @@ def run(payload):
     original_request = requests.sessions.Session.request
 
     def bounded_request(session, method, url, *args, **kwargs):
+        control.check()
         if "/chat/completions" in str(url) or "/qa/platform/stream" in str(url):
             if request_count[0] >= ai["max_requests"]:
                 raise AIBudgetExceeded()
@@ -221,6 +225,8 @@ def run(payload):
     requests.sessions.Session.request = bounded_request
     attention = 0
     for course in payload["courses"]:
+        control.begin_course(settings["limit"])
+        control.check()
         ISSUES.clear()
         key = course_key(course)
         emit("course", key=key, status="running", message="正在运行 · " + course["name"])
@@ -236,6 +242,11 @@ def run(payload):
             else:
                 client.fuckCourse(course["id"])
             status = "attention" if "attention" in ISSUES else "limited" if "limited" in ISSUES else "done"
+        except TaskStopped as stopped:
+            if stopped.reason != "course_limit":
+                raise
+            status = "limited"
+            log("已达到本门课程的实际运行时限，已尝试保存最后进度。", "warning")
         except Exception as error:
             status = "attention"
             if type(error).__name__ == "CaptchaException":
@@ -267,6 +278,17 @@ def main():
         log("已达到本次 AI 请求上限，任务停止。", "warning")
         emit("result", message="已达到 AI 请求上限，请查看任务记录。", error=True)
         return 1
+    except TaskStopped as stopped:
+        console.flush()
+        status = "limited" if stopped.reason == "limited" else "stopped"
+        message = ("已达到本次总时长" if status == "limited" else "已按请求停止任务") + "，已尝试完成收尾；进度以平台实际接收为准。"
+        reason = None
+        if "verification" in ISSUES:
+            message += " 收尾时需要手动验证，请先到知到官方页面处理后再开始任务。"
+            reason = "verification"
+        log(message, "warning")
+        emit("result", message=message, status=status, error=False, reason=reason)
+        return 0
     except Exception as error:
         console.flush()
         log(redact(error), "error")
