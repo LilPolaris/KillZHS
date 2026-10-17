@@ -3,9 +3,12 @@
 import json
 from collections import Counter
 
+import requests
+
 from .fake_platform import background_view
 
 HEARTBEAT = "https://studentexamtest.zhihuishu.com/gateway/t/v1/exam/user/updateUserUsedTime"
+RECORDED_REQUESTS_ENCODING = "gzip, deflate, zstd"
 
 
 def background_summary(entries):
@@ -23,9 +26,19 @@ def trace(platform, *, seed, outcome, results, logs):
 
 
 def request_differences(expected, actual, limit=3):
-    """Readable description of where two main-thread request sequences diverge."""
+    """Compare wire data, adapting only requests' interpreter-dependent default.
+
+    The recorder used Python 3.14, whose stdlib enables zstd. Python 3.12's
+    requests default advertises only decoders available there. Explicit platform
+    headers (gzip, deflate, br) and every other header/payload remain strict.
+    Golden files are never rewritten and advertised unsupported decoders still
+    fail against the current environment's actual requests default.
+    """
     problems = []
     for index, (left, right) in enumerate(zip(expected, actual, strict=False)):
+        if left.get("headers", {}).get("accept-encoding") == RECORDED_REQUESTS_ENCODING:
+            left = {**left, "headers": {**left["headers"],
+                                       "accept-encoding": requests.utils.DEFAULT_ACCEPT_ENCODING}}
         if left != right:
             fields = sorted(key for key in set(left) | set(right) if left.get(key) != right.get(key))
             problems.append(f"request #{index} {left.get('url')} differs in {fields}:\n"
