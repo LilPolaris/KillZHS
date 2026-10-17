@@ -593,6 +593,11 @@ class Controller:
                 self.stop_requested = None
                 self.ended_at = time.time()
                 self.process, self.qr = None, None
+                if self.action == "assessment_run":
+                    for result in self.assessment_results.values():
+                        if result.get("state") == "running":
+                            result.update(state=self.status if self.status in ("stopped", "limited") else "attention",
+                                          message=self.message)
                 for course in self.courses:
                     if course["status"] in ("queued", "running"):
                         course["status"] = self.status if self.status in ("stopped", "limited") else "attention"

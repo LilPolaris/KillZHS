@@ -193,6 +193,26 @@ class WorkflowTest(unittest.TestCase):
 
 
 class ControllerTest(unittest.TestCase):
+    def test_failed_task_cannot_leave_a_paper_marked_running(self):
+        with tempfile.TemporaryDirectory() as directory:
+            controller = Controller(directory, demo=True)
+            try:
+                key = course_key(controller.courses[0])
+                controller.dispatch({"action": "assessment_scan", "courses": [key]})
+                controller.thread.join(3)
+                selected = item_key(controller.assessments[0])
+                controller.dispatch({"action": "ai_settings", "ai": {"enabled": True}})
+                def failed_demo(payload):
+                    controller.event({"type": "assessment_result", "key": selected, "state": "running"})
+                    controller.event({"type": "result", "message": "模拟网络错误，结果需核对。", "error": True})
+                controller.run_demo = failed_demo
+                controller.dispatch({"action": "assessment_run", "courses": [key], "assessments": [selected]})
+                controller.thread.join(3)
+                self.assertEqual(controller.assessment_results[selected]["state"], "attention")
+                self.assertIn("核对", controller.assessment_results[selected]["message"])
+            finally:
+                controller.close()
+
     def test_exam_verification_keeps_its_task_kind_and_completed_video_course(self):
         with tempfile.TemporaryDirectory() as directory:
             controller = Controller(directory, demo=True)
